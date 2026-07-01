@@ -1,0 +1,6 @@
+.cache/
+.config/
+.ssh/
+storage/
+downloads/
+__pycache__/

@@ -1,0 +1,51 @@
+ability|قدرة|She has the ability to learn quickly.
+able|قادر|He is able to swim.
+about|حول|Tell me about yourself.
+above|فوق|The picture is above the table.
+accept|يقبل|I accept your invitation.
+account|حساب|I opened a new account.
+act|يتصرف|Always act with kindness.
+action|عمل|Your actions matter.
+active|نشيط|She is an active student.
+activity|نشاط|Reading is my favorite activity.
+add|يضيف|Add some sugar to the tea.
+address|عنوان|What is your address?
+adult|بالغ|He became an adult last year.
+advice|نصيحة|Thank you for your advice.
+afraid|خائف|The child is afraid of the dark.
+after|بعد|We went home after school.
+afternoon|بعد الظهر|Good afternoon, everyone.
+again|مرة أخرى|Please repeat it again.
+age|عمر|What is your age?
+agree|يوافق|I agree with your idea.
+air|هواء|The air is fresh today.
+airport|مطار|We arrived at the airport early.
+all|كل|All students passed the test.
+allow|يسمح|My parents allow me to travel.
+almost|تقريبًا|I am almost ready.
+alone|بمفرده|She lives alone.
+along|على طول|We walked along the river.
+already|بالفعل|I have already eaten.
+also|أيضًا|She also likes football.
+always|دائمًا|He always tells the truth.
+amazing|مدهش|The view is amazing.
+among|بين|She sat among her friends.
+amount|كمية|Drink a small amount of water.
+ancient|قديم|Egypt has many ancient monuments.
+and|و|Tea and coffee are available.
+angry|غاضب|Don't be angry.
+animal|حيوان|The elephant is a large animal.
+another|آخر|Can I have another chance?
+answer|إجابة|Do you know the answer?
+any|أي|Do you have any questions?
+anyone|أي شخص|Anyone can learn English.
+anything|أي شيء|You can ask me anything.
+apartment|شقة|They live in a small apartment.
+apple|تفاحة|I eat an apple every morning.
+April|أبريل|April is the fourth month.
+area|منطقة|This area is very quiet.
+arm|ذراع|My arm hurts today.
+around|حول|We walked around the park.
+arrive|يصل|The train arrived on time.
+art|فن|She enjoys modern art.
+artist|فنان|He is a talented artist.
