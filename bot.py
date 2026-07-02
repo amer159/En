@@ -86,18 +86,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.message.reply_text(text)
 
-def main():
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
-
-    print("🤖 Bot is running...")
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
 import asyncio
 
 async def main():
