@@ -6,7 +6,7 @@ import os
 
 TOKEN = os.getenv("TOKEN")
 
-FREE_GROUP_LINK = "https://t.me/your_free_group"
+FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
 PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة يرجى التواصل مع الإدارة."
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
