@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 import datetime
 import os
 import asyncio
@@ -132,56 +132,65 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"📊 **الإحصائيات الحالية:**\n"
                 f"👥 عدد الطلاب المنضمين للبوت: `{len(users)}` مستخدم.\n"
                 f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
-                f"📢 **للإرسال الجماعي:**\n"
-                f"أرسل نص الرسالة مسبوقاً بالأمر هكذا:\n"
-                f"`/broadcast مرحبا بكم طلابنا...`"
+                f"📸 **طريقة الإرسال الجماعي (نصوص وصور):**\n"
+                f"قم بإرسال أو توجيه (Forward) أي رسالة أو صورة مباشرة إلى البوت هنا، وسيظهر لك زر لتأكيد بثها لجميع الطلاب."
             )
             await query.message.reply_text(text, parse_mode="Markdown")
         else:
             await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
 
+    # 🟢 تنفيذ البث الجماعي عند ضغط زر التأكيد
+    elif query.data.startswith("send_broadcast_"):
+        if user_id not in ADMIN_IDS:
+            await query.message.reply_text("❌ عذراً، هذا الإجراء خاص بالإدارة فقط.")
+            return
 
-# 🟢 دالة الإرسال الجماعي الجديدة لكافة المشتركين
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        msg_id = int(query.data.split("_")[2])
+        users = get_users()
+
+        if not users:
+            await query.message.reply_text("❌ لا يوجد أي مشتركين حالياً.")
+            return
+
+        await query.message.reply_text(f"🔄 جاري بدء البث الجماعي إلى {len(users)} مستخدم...")
+
+        success_count = 0
+        fail_count = 0
+
+        for u_id in users:
+            try:
+                # دالة copy_message تقوم بنسخ الرسالة الأصلية مهما كان نوعها (نص، صورة، إلخ)
+                await context.bot.copy_message(chat_id=int(u_id), from_chat_id=user_id, message_id=msg_id)
+                success_count += 1
+                await asyncio.sleep(0.05)  # لتفادي حظر التليجرام
+            except Exception:
+                fail_count += 1
+                continue
+
+        await query.message.reply_text(
+            f"✅ **اكتمل الإرسال الجماعي بنجاح!**\n\n"
+            f"👍 تم التسليم إلى: `{success_count}` مستخدم.\n"
+            f"👎 فشل التسليم إلى: `{fail_count}` مستخدم."
+        )
+
+
+# 🟢 استقبال أي رسالة أو صورة من الأدمن وتجهيزها للبث
+async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    
-    # التأكد أن المرسل هو أدمن لحماية البوت
-    if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ عذراً، هذا الأمر خاص بالإدارة فقط.")
-        return
 
-    # التحقق من وجود نص للرسالة بعد الأمر
-    if not context.args:
-        await update.message.reply_text("❌ يرجى كتابة الرسالة بعد الأمر، مثال:\n`/broadcast نص الرسالة هنا`")
-        return
-
-    # تجميع نص الرسالة الكامل
-    broadcast_text = " ".join(context.args)
-    users = get_users()
-    
-    if not users:
-        await update.message.reply_text("❌ لا يوجد أي مشتركين في البوت حالياً لإرسال الرسالة إليهم.")
-        return
-
-    await update.message.reply_text(f"🔄 جاري بدء الإرسال الجماعي إلى {len(users)} مستخدم... برجاء الانتظار.")
-    
-    success_count = 0
-    fail_count = 0
-    
-    for u_id in users:
-        try:
-            await context.bot.send_message(chat_id=int(u_id), text=broadcast_text)
-            success_count += 1
-            await asyncio.sleep(0.05)  # تفادي حظر التليجرام عند الإرسال السريع
-        except Exception:
-            fail_count += 1
-            continue
-
-    await update.message.reply_text(
-        f"✅ **اكتمل الإرسال الجماعي بنجاح!**\n\n"
-        f"👍 تم التسليم إلى: `{success_count}` مستخدم.\n"
-        f"👎 فشل التسليم إلى: `{fail_count}` مستخدم (قاموا بحظر البوت)."
-    )
+    # التحقق من أن المرسل أدمن
+    if user_id in ADMIN_IDS:
+        msg_id = update.message.message_id
+        
+        keyboard = [
+            [InlineKeyboardButton("📢 إرسال جماعي للكل", callback_data=f"send_broadcast_{msg_id}")],
+            [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
+        ]
+        
+        await update.message.reply_text(
+            "📥 تم استلام الرسالة/الصورة بنجاح.\nهل تريد بثها لجميع الطلاب الآن؟",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 
 # وظيفة فحص الوقت والإرسال التلقائي اليومي للكلمات لجميع المشتركين
@@ -225,9 +234,10 @@ async def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    # 🟢 ربط أمر الإرسال الجماعي الجديد بالبوت
-    app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CallbackQueryHandler(buttons))
+    
+    # 🟢 التقاط أي رسالة (نص، صورة، ملفات) مرسلة من الأدمن لتجهيز بثها
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
 
     print("🤖 Bot is running...")
     await app.initialize()
