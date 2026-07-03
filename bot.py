@@ -126,7 +126,6 @@ def ask_ai_free(user_message):
         return "I'm ready! Let's practice English together. Ask me any question or type a sentence."
 
 
-async var_start = start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     save_user(user_id, "active")
@@ -425,3 +424,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+                    
