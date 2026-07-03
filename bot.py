@@ -63,7 +63,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     # إذا كان المستخدم هو أنت (الأدمن)، يتم إظهار زر لوحة التحكم
-    if user_id == ADMIN_IDS:
+    if user_id in ADMIN_IDS:
         keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم (الأدمن)", callback_data="admin_panel")])
 
     text = (
