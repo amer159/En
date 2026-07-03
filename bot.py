@@ -5,6 +5,8 @@ import os
 import asyncio
 import random
 import psycopg2
+import http.client
+import json
 
 # قراءة التوكن والروابط البيئية من Railway
 TOKEN = os.getenv("TOKEN")
@@ -15,9 +17,9 @@ PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة 
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# 🔒 [تعديل هام] ضع المعرفات الخاصة بك وبالأستاذة هنا
-PRIMARY_ADMIN = 5003264608       # 👈 ضع الـ ID الخاص بك هنا لتصلك الرسائل دائماً
-ADMIN_IDS = [5003264608,5028116353]  # 👈 ضع الـ ID الخاص بك والـ ID الخاص بالأستاذة صابرين هنا معاً
+# 🔒 المعرفات الخاصة بك وبالأستاذة صابرين
+PRIMARY_ADMIN = 5003264608       
+ADMIN_IDS = [5003264608, 5028116353]  
 
 
 def init_db():
@@ -99,6 +101,32 @@ def get_total_users_count():
     return count
 
 
+# 🧠 دالة جلب رد الذكاء الاصطناعي بشكل مجاني ومستقر تماماً لتعليم الإنجليزية
+def ask_ai_free(user_message):
+    try:
+        conn = http.client.HTTPSConnection("openchat-ai_chat_web_api.net.eu.org")
+        payload = json.dumps({
+            "prompt": (
+                "You are an expert English teacher chatbot assistant for students on Telegram. "
+                "Respond kindly, short, and encourage them to practice English. "
+                "If they write in Arabic, translate it or help them express it in English. "
+                f"User says: {user_message}"
+            )
+        })
+        headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0'
+        }
+        conn.request("POST", "/chat", payload, headers)
+        res = conn.getresponse()
+        data = res.read().decode("utf-8")
+        result = json.loads(data)
+        return result.get("response", "I'm here to help you learn English! Ask me anything or practice talking to me.")
+    except Exception:
+        return "I'm ready! Let's practice English together. Ask me any question or type a sentence."
+
+
+async var_start = start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     save_user(user_id, "active")
@@ -118,8 +146,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم (الأدمن)", callback_data="admin_panel")])
 
     text = (
-        "👋 مرحبًا بك في بوت الأستاذة صبرين لتعليم اللغة الإنجليزية.\n\n"
-        "📚 اختر إحدى الخدمات من الأزرار التالية:"
+        "👋 مرحبًا بك في بوت الأستاذة صابرين لتعليم اللغة الإنجليزية.\n\n"
+        "🤖 أنا الآن مدعوم بالذكاء الاصطناعي (AI)! يمكنك التحدث معي بالإنجليزية مباشرة أو إرسال جمل لأقوم بترجمتها وتصحيحها لك فوراً.\n\n"
+        "📚 أو اختر إحدى الخدمات من الأزرار التالية:"
     )
 
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -208,11 +237,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🔴 قاموا بحظر البوت (Block): `{len(blocked_users)}` ({blocked_pct:.1f}%)\n"
                 f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
                 f"📦 **أدوات النسخ الاحتياطي (Backup):**\n"
-                f"يمكنك تحميل قاموس الكلمات الحالي المرفوع بالسيرفر."
+                f"يمكنك تحميل ملف الكلمات أو استخراج ملف المشتركين (اليوزرس) حياً من الداتا بيس السحابية."
             )
             
             admin_keyboard = [
-                [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")]
+                [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")],
+                [InlineKeyboardButton("📥 تحميل ملف المشتركين (txt)", callback_data="backup_users_list")]
             ]
             
             await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(admin_keyboard), parse_mode="Markdown")
@@ -225,6 +255,33 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_document(chat_id=user_id, document=open("words.txt", "rb"), filename="words.txt", caption="📦 نسخة احتياطية لملف الكلمات الحالية.")
             else:
                 await query.message.reply_text("❌ ملف words.txt غير موجود حالياً في السيرفر.")
+
+    # 📥 توليد ملف اليوزرس حياً من قاعدة البيانات وإرساله للأدمن فوراً بناءً على طلبك
+    elif query.data == "backup_users_list":
+        if user_id in ADMIN_IDS:
+            active_users = get_users_by_status("active")
+            blocked_users = get_users_by_status("blocked")
+            all_users = active_users + blocked_users
+            
+            if not all_users:
+                await query.message.reply_text("❌ قاعدة البيانات فارغة تماماً ولا يوجد مشتركين.")
+                return
+                
+            temp_filename = "users.txt"
+            with open(temp_filename, "w", encoding="utf-8") as f:
+                for u in all_users:
+                    f.write(f"{u}\n")
+            
+            await context.bot.send_document(
+                chat_id=user_id, 
+                document=open(temp_filename, "rb"), 
+                filename="users.txt", 
+                caption=f"📋 ملف المشتركين الحالي مستخرج حياً من السحاب:\n👥 الإجمالي: {len(all_users)} مستخدم."
+            )
+            try:
+                os.remove(temp_filename)
+            except Exception:
+                pass
 
     elif query.data.startswith("send_broadcast_"):
         if user_id not in ADMIN_IDS:
@@ -259,7 +316,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 save_user(u_id, "blocked")
                 continue
 
-        # 🟢 [ميزة التوجيه] إذا قامت الأستاذة صابرين بالإرسال، تصلك نسخة إليك فوراً للمراقبة والمتابعة
         if user_id != PRIMARY_ADMIN:
             try:
                 await context.bot.copy_message(chat_id=PRIMARY_ADMIN, from_chat_id=user_id, message_id=msg_id)
@@ -274,8 +330,27 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# 🛠️ معالجة الرسائل الواردة: توجيه وإرسال للأدمن، وذكاء اصطناعي للطلاب
+async def handle_user_and_admin_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        # إذا أرسل الأدمن ميديا أو صورة، يفتح له البث الجماعي
+        user_id = update.message.from_user.id if update.message else None
+        if user_id in ADMIN_IDS:
+            msg_id = update.message.message_id
+            keyboard = [
+                [InlineKeyboardButton("📢 إرسال جماعي للكل", callback_data=f"send_broadcast_{msg_id}")],
+                [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
+            ]
+            await update.message.reply_text(
+                "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب وحفظ البيانات سحابياً؟",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        return
+
     user_id = update.message.from_user.id
+    user_text = update.message.text
+
+    # 1. إذا كان المرسل هو الأدمن: يعرض له خيار البث الجماعي المعتاد
     if user_id in ADMIN_IDS:
         msg_id = update.message.message_id
         keyboard = [
@@ -286,6 +361,14 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب وحفظ البيانات سحابياً؟",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+    
+    # 2. إذا كان المرسل طالباً: يرد عليه الذكاء الاصطناعي (AI) فوراً وبشكل مجاني
+    else:
+        save_user(user_id, "active")
+        # إظهار حالة "جاري الكتابة..." لتبدو المحادثة حقيقية وتفاعلية
+        await context.bot.send_chat_action(chat_id=user_id, action="typing")
+        ai_reply = ask_ai_free(user_text)
+        await update.message.reply_text(ai_reply)
 
 
 async def daily_auto_send(app: Application):
@@ -327,9 +410,10 @@ async def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttons))
-    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
+    # معالج شامل للرسائل يدعم الإرسال للأدمن والـ AI للطلاب
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_user_and_admin_messages))
 
-    print("🤖 Bot is running with Permanent PostgreSQL Database...")
+    print("🤖 Bot is running with Permanent PostgreSQL Database & AI Integration...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
