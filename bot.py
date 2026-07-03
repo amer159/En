@@ -7,18 +7,18 @@ import random
 import psycopg2
 import http.client
 import json
-import urllib.parse
 
-# قراءة التوكن والروابط البيئية من Railway
+# 🔑 إعداد التوكن، قاعدة البيانات، ومفتاح الذكاء الاصطناعي بشكل آمن تماماً عبر المتغيرات البيئية
 TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
 PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة يرجى التواصل مع الإدارة."
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# 🔒 المعرفات الخاصة بك وبالأستاذة صابرين
+# 🔒 المعرفات الخاصة بالمسؤولين
 PRIMARY_ADMIN = 5003264608       
 ADMIN_IDS = [5003264608, 5028116353]  
 
@@ -102,33 +102,50 @@ def get_total_users_count():
     return count
 
 
-# 🧠 دالة الذكاء الاصطناعي المحدثة والمستقرة 100% لتصحيح وتوقع الكلمات وتعليم الإنجليزية
+# 🧠 دالة الذكاء الاصطناعي مع معالجة آمنة للمفتاح والتعليمات التربوية الصارمة
 def ask_ai_free(user_message):
-    try:
-        # خطة حماية ذكية لتصحيح الأخطاء الإملائية الأكثر شيوعاً فوراً بشكل محلي
-        msg_lower = user_message.lower()
-        if "discraib" in msg_lower or "discreb" in msg_lower or "discrieb" in msg_lower:
-            return "💡 Did you mean 'describe'? A tree is a tall plant with a wooden trunk, branches, and leaves! How can I help you practice today?"
-        if "skool" in msg_lower:
-            return "💡 Spelling check: It is spelled 'school'! Excellent attempt. Keep trying to build sentences!"
-
-        # الاتصال بالسيرفر الجديد البديل
-        conn = http.client.HTTPSConnection("api.simsimi.net")
-        prompt = f"You are an expert English teacher. Correct this sentence if it has any mistakes and reply shortly in English: {user_message}"
-        encoded_prompt = urllib.parse.quote(prompt)
-        url = f"/v2/?text={encoded_prompt}&lc=en"
+    if not GEMINI_API_KEY:
+        print("❌ خطأ: لم يتم ضبط GEMINI_API_KEY في متغيرات السيرفر!")
+        return "The AI assistant is updating. Please try again in a moment!"
         
-        conn.request("GET", url)
+    try:
+        host = "generativelanguage.googleapis.com"
+        url = f"/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        # 📋 تعليمات لضمان الترجمة الفورية للعربية والتصحيح الدقيق للإنجليزية
+        system_instruction = (
+            "You are a strict and helpful English teacher bot. You must follow these two rules carefully:\n"
+            "1. If the student writes in ANY language other than English (like Arabic), DO NOT answer their question. "
+            "Instead, ONLY translate their message into English and nothing else.\n"
+            "2. If the student writes in English, check their message for any spelling or grammatical mistakes. "
+            "Kindly point out the mistakes, provide the correct version, and then reply to them shortly in English to keep the conversation going.\n"
+            "Keep all responses short, clear, and perfectly formatted for English learners."
+        )
+        
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": f"{system_instruction}\n\nStudent's message: {user_message}"}
+                    ]
+                }
+            ]
+        }
+        
+        headers = {"Content-Type": "application/json"}
+        conn = http.client.HTTPSConnection(host)
+        conn.request("POST", url, body=json.dumps(payload), headers=headers)
+        
         res = conn.getresponse()
         data = res.read().decode("utf-8")
-        result = json.loads(data)
+        response_json = json.loads(data)
         
-        if result.get("status") == "success" and result.get("success"):
-            return result.get("success")
-        else:
-            return "Good job practicing your English! Let's build more sentences together. Try asking me another question."
-    except Exception:
-        return "I am ready! Let's practice English. Your text is received, try writing another sentence to test me!"
+        ai_reply = response_json['candidates'][0]['content']['parts'][0]['text']
+        return ai_reply.strip()
+
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return "I am ready! Let's practice English together. Please write your sentence in English!"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -151,7 +168,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         "👋 مرحبًا بك في بوت الأستاذة صابرين لتعليم اللغة الإنجليزية.\n\n"
-        "🤖 أنا الآن مدعوم بالذكاء الاصطناعي (AI)! يمكنك التحدث معي بالإنجليزية مباشرة أو إرسال جمل لأقوم بترجمتها وتصحيحها لك فوراً.\n\n"
+        "🤖 أنا الآن مدعوم بذكاء اصطناعي متكامل (Gemini AI)! "
+        "يمكنك الكتابة لي بالإنجليزية لأصحح لك أخطاءك، أو اكتب بأي لغة أخرى لأترجمها لك فوراً.\n\n"
         "📚 أو اختر إحدى الخدمات من الأزرار التالية:"
     )
 
@@ -409,7 +427,7 @@ async def main():
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_user_and_admin_messages))
 
-    print("🤖 Bot is running with Permanent PostgreSQL Database & AI Integration...")
+    print("🤖 Bot is running with Permanent PostgreSQL Database & Gemini AI Integration...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
@@ -421,4 +439,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-                    
