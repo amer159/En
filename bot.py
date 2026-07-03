@@ -13,7 +13,7 @@ PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
 # معرف الأدمن الخاص بك للدخول للوحة التحكم
-ADMIN_ID = 5003264608  
+ADMIN_IDS = [5003264608]  
 
 
 def load_words():
@@ -63,7 +63,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     # إذا كان المستخدم هو أنت (الأدمن)، يتم إظهار زر لوحة التحكم
-    if user_id == ADMIN_ID:
+    if user_id == ADMIN_IDS:
         keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم (الأدمن)", callback_data="admin_panel")])
 
     text = (
@@ -123,7 +123,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # استجابة زر لوحة التحكم للأدمن فقط
     elif query.data == "admin_panel":
-        if user_id == ADMIN_ID:
+        if user_id == ADMIN_IDS:
             words = load_words()
             users = get_users()
             
