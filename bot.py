@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 import datetime
 import os
 import asyncio
@@ -12,7 +12,7 @@ PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة 
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# 🟢 معرف الأدمن الخاص بك
+# معرف الأدمن الخاص بك للدخول للوحة التحكم
 ADMIN_ID = 5003264608  
 
 
@@ -30,14 +30,16 @@ def load_words():
         pass
     return words
 
-# 🟢 دالة لحفظ المشتركين الجدد في ملف نصي
+
+# دالة لحفظ المشتركين الجدد في ملف نصي users.txt
 def save_user(user_id):
     users = get_users()
     if str(user_id) not in users:
         with open("users.txt", "a", encoding="utf-8") as f:
             f.write(f"{user_id}\n")
 
-# 🟢 دالة لجلب قائمة المشتركين
+
+# دالة لجلب قائمة المشتركين من الملف
 def get_users():
     try:
         with open("users.txt", "r", encoding="utf-8") as f:
@@ -49,7 +51,7 @@ def get_users():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     
-    # 🟢 حفظ المستخدم تلقائياً عند ضغط /start
+    # حفظ المستخدم تلقائياً عند ضغط /start لرصد عدد المشتركين
     save_user(user_id)
 
     keyboard = [
@@ -60,7 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📞 التواصل", callback_data="contact")],
     ]
 
-    # 🟢 إظهار زر لوحة التحكم للأدمن فقط
+    # إذا كان المستخدم هو أنت (الأدمن)، يتم إظهار زر لوحة التحكم
     if user_id == ADMIN_ID:
         keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم (الأدمن)", callback_data="admin_panel")])
 
@@ -81,19 +83,28 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if query.data == "free":
-        await query.message.reply_text(f"📚 المجموعة المجانية:\n{FREE_GROUP_LINK}")
+        await query.message.reply_text(
+            f"📚 المجموعة المجانية:\n{FREE_GROUP_LINK}"
+        )
 
     elif query.data == "premium":
-        await query.message.reply_text(f"💎 {PREMIUM_GROUP_INFO}")
+        await query.message.reply_text(
+            f"💎 {PREMIUM_GROUP_INFO}"
+        )
 
     elif query.data == "payment":
-        await query.message.reply_text(PAYMENT_TEXT)
+        await query.message.reply_text(
+            PAYMENT_TEXT
+        )
 
     elif query.data == "contact":
-        await query.message.reply_text(f"📞 للتواصل:\n{CONTACT_TEXT}")
+        await query.message.reply_text(
+            f"📞 للتواصل:\n{CONTACT_TEXT}"
+        )
 
     elif query.data == "today":
         words = load_words()
+
         if not words:
             await query.message.reply_text("❌ ملف words.txt فارغ أو غير موجود.")
             return
@@ -107,30 +118,33 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🇸🇦 المعنى: {word[1]}\n\n"
             f"📝 المثال:\n{word[2]}"
         )
+
         await query.message.reply_text(text)
 
-    # 🟢 لوحة التحكم الخاصة بالأدمن وعرض عدد المنضمين
-    elif query.data == "admin_panel" and user_id == ADMIN_ID:
-        words = load_words()
-        users = get_users()
-        
-        text = (
-            f"⚙️ **لوحة تحكم الإدارة**\n\n"
-            f"📊 **الإحصائيات الحالية:**\n"
-            f"👥 عدد الطلاب المنضمين للبوت: `{len(users)}` مستخدم.\n"
-            f"📝 إجمالي الكلمات في الملف: `{len(words)}` كلمة."
-        )
-        await query.message.reply_text(text, parse_mode="Markdown")
+    # استجابة زر لوحة التحكم للأدمن فقط
+    elif query.data == "admin_panel":
+        if user_id == ADMIN_ID:
+            words = load_words()
+            users = get_users()
+            
+            text = (
+                f"⚙️ **لوحة تحكم الإدارة**\n\n"
+                f"📊 **الإحصائيات الحالية:**\n"
+                f"👥 عدد الطلاب المنضمين للبوت: `{len(users)}` مستخدم.\n"
+                f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة."
+            )
+            await query.message.reply_text(text, parse_mode="Markdown")
+        else:
+            await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
 
 
-# 🟢 وظيفة الإرسال التلقائي اليومي المدمجة مع الـ Loop الخاص بك
+# وظيفة فحص الوقت والإرسال التلقائي اليومي للكلمات لجميع المشتركين
 async def daily_auto_send(app: Application):
-    print("⏰ تم تفعيل نظام الإرسال التلقائي اليومي للكلمات...")
+    print("⏰ تم تشغيل نظام الإرسال التلقائي اليومي في الخلفية...")
     while True:
         try:
             now = datetime.datetime.now()
-            # حدد الساعة التي تريد إرسال الكلمة فيها (مثلاً الساعة 09:00 صباحاً بتوقيت السيرفر)
-            # يمكنك تعديل 9 إلى أي ساعة تناسبك
+            # يقوم بالإرسال عند الساعة 09:00 صباحاً (يمكنك تعديل الرقم 9 لأي ساعة تريد)
             if now.hour == 9 and now.minute == 0:
                 words = load_words()
                 users = get_users()
@@ -150,18 +164,16 @@ async def daily_auto_send(app: Application):
                     for u_id in users:
                         try:
                             await app.bot.send_message(chat_id=int(u_id), text=text, parse_mode="Markdown")
-                            await asyncio.sleep(0.05) # تأخير بسيط لتجنب حظر التليجرام (Flood)
+                            await asyncio.sleep(0.05)  # تأخير لتفادي حظر التليجرام عند الإرسال الجماعي
                         except Exception:
-                            continue # يتخطى الحسابات المحظورة
+                            continue  # يتخطى الحسابات التي قامت بحظر البوت
                     
-                    print("✅ تم الإرسال التلقائي بنجاح.")
-                    # انتظر ساعة كاملة لضمان عدم إرسال الرسالة مجدداً في نفس الدقيقة
-                    await asyncio.sleep(3600)
-            
+                    print("✅ تم الإرسال اليومي التلقائي بنجاح لكافة الطلاب.")
+                    await asyncio.sleep(3600)  # الانتظار ساعة كاملة لعدم تكرار الإرسال في نفس الدقيقة
         except Exception as e:
             print(f"خطأ في نظام الإرسال التلقائي: {e}")
             
-        await asyncio.sleep(60) # يفحص كل دقيقة إذا كان الوقت قد حان
+        await asyncio.sleep(60)  # فحص الوقت مجدداً بعد دقيقة واحدة
 
 
 async def main():
@@ -175,14 +187,14 @@ async def main():
     await app.start()
     await app.updater.start_polling()
 
-    # 🟢 تشغيل نظام الإرسال التلقائي في الخلفية جنباً إلى جنب مع الـ Loop الخاص بك
+    # تشغيل مهمة الإرسال التلقائي كخلفية (Background Task)
     asyncio.create_task(daily_auto_send(app))
 
-    # الـ Loop الخاص بك الذي يبقي البوت يعمل بشكل مستقر ومجرب
+    # حلقة التشغيل المستقرة الخاصة بك لإبقاء البوت متصلاً بالسيرفر
     while True:
         await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
+                  
