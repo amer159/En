@@ -123,7 +123,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # استجابة زر لوحة التحكم للأدمن فقط
     elif query.data == "admin_panel":
-        if user_id == ADMIN_IDS:
+        if user_id in ADMIN_IDS:
             words = load_words()
             users = get_users()
             
