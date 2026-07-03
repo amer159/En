@@ -49,3 +49,53 @@ around|حول|We walked around the park.
 arrive|يصل|The train arrived on time.
 art|فن|She enjoys modern art.
 artist|فنان|He is a talented artist.
+ask|يسأل|She asked an important question.
+attack|يهاجم|The dog did not attack anyone.
+attention|انتباه|Please pay attention in class.
+August|أغسطس|August is usually very hot.
+aunt|عمة/خالة|My aunt lives in Oran.
+autumn|الخريف|Leaves fall in autumn.
+available|متاح|The teacher is available now.
+avoid|يتجنب|Avoid making the same mistake.
+away|بعيدًا|My school is far away.
+baby|طفل رضيع|The baby is sleeping.
+back|خلف|The bag is on the back seat.
+bad|سيئ|Today the weather is bad.
+bag|حقيبة|My bag is very heavy.
+ball|كرة|The children are playing with a ball.
+banana|موز|She eats a banana every morning.
+bank|بنك|I went to the bank yesterday.
+base|قاعدة|This is the base of the tower.
+basic|أساسي|English is a basic skill.
+basket|سلة|The basket is full of apples.
+bathroom|حمام|The bathroom is clean.
+be|يكون|I want to be a doctor.
+beach|شاطئ|We spent the day at the beach.
+bear|دب|The bear is very strong.
+beautiful|جميل|This flower is beautiful.
+beauty|جمال|The beauty of nature is amazing.
+because|لأن|I stayed home because it rained.
+become|يصبح|He wants to become an engineer.
+bed|سرير|The baby is on the bed.
+bedroom|غرفة النوم|My bedroom is small.
+before|قبل|Wash your hands before eating.
+begin|يبدأ|The lesson begins at eight.
+behind|خلف|The car is behind the house.
+believe|يصدق|I believe you.
+below|أسفل|The shoes are below the chair.
+best|الأفضل|She is my best friend.
+better|أفضل|Today is better than yesterday.
+between|بين|The school is between two buildings.
+bicycle|دراجة|He rides his bicycle every day.
+big|كبير|They live in a big house.
+bird|طائر|A bird is singing in the tree.
+birthday|عيد الميلاد|Happy birthday to you!
+black|أسود|She is wearing a black dress.
+blanket|بطانية|The blanket is warm.
+blue|أزرق|The sky is blue.
+boat|قارب|The boat is on the lake.
+body|جسم|Exercise keeps your body healthy.
+book|كتاب|This book is very interesting.
+borrow|يستعير|May I borrow your pen?
+both|كلاهما|Both answers are correct.
+bottle|زجاجة|Please bring a bottle of water.
