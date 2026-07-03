@@ -162,7 +162,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             explanation=explanation
         )
 
-    # لوحة التحكم المتقدمة بالإحصائيات التفصيلية
+    # لوحة التحكم المتقدمة بالإحصائيات التفصيلية وأزرار النسخ الاحتياطي
     elif query.data == "admin_panel":
         if user_id in ADMIN_IDS:
             words = load_words()
@@ -170,7 +170,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             blocked_users = get_users_by_status("blocked")
             total_users = len(active_users) + len(blocked_users)
             
-            # حساب النسبة المئوية للتفاعل
             active_pct = (len(active_users) / total_users * 100) if total_users > 0 else 0
             blocked_pct = (len(blocked_users) / total_users * 100) if total_users > 0 else 0
 
@@ -181,12 +180,39 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🟢 الطلاب النشطين (الفعالين): `{len(active_users)}` ({active_pct:.1f}%)\n"
                 f"🔴 قاموا بحظر البوت (Block): `{len(blocked_users)}` ({blocked_pct:.1f}%)\n"
                 f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
-                f"📸 **طريقة الإرسال الجماعي (نصوص وصور):**\n"
-                f"أرسل أو وجّه أي رسالة/صورة هنا للبث."
+                f"📦 **أدوات النسخ الاحتياطي (Backup):**\n"
+                f"اضغط على الأزرار أدناه لتحميل ملفاتك بأمان على هاتفك."
             )
-            await query.message.reply_text(text, parse_mode="Markdown")
+            
+            # 🟢 إضافة أزرار تحميل النسخ الاحتياطية في لوحة الأدمن
+            admin_keyboard = [
+                [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")],
+                [InlineKeyboardButton("👥 تحميل قائمة المشتركين", callback_data="backup_users")]
+            ]
+            
+            await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(admin_keyboard), parse_mode="Markdown")
         else:
             await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
+
+    # 🟢 كود إرسال ملف الكلمات كنسخة احتياطية
+    elif query.data == "backup_words":
+        if user_id in ADMIN_IDS:
+            if os.path.exists("words.txt"):
+                await context.bot.send_document(chat_id=user_id, document=open("words.txt", "rb"), filename="words.txt", caption="📦 نسخة احتياطية لملف الكلمات الحالية.")
+            else:
+                await query.message.reply_text("❌ ملف words.txt غير موجود حالياً في السيرفر.")
+        else:
+            await query.message.reply_text("❌ غير مسموح.")
+
+    # 🟢 كود إرسال ملف قائمة الطلاب كنسخة احتياطية
+    elif query.data == "backup_users":
+        if user_id in ADMIN_IDS:
+            if os.path.exists("users.txt"):
+                await context.bot.send_document(chat_id=user_id, document=open("users.txt", "rb"), filename="users.txt", caption="📦 نسخة احتياطية لقائمة المشتركين (مع حالاتهم).")
+            else:
+                await query.message.reply_text("❌ ملف users.txt غير موجود حالياً في السيرفر.")
+        else:
+            await query.message.reply_text("❌ غير مسموح.")
 
     elif query.data.startswith("send_broadcast_"):
         if user_id not in ADMIN_IDS:
@@ -279,7 +305,7 @@ async def main():
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
 
-    print("🤖 Bot is running with Advanced Stats...")
+    print("🤖 Bot is running with Advanced Stats & Backup Tools...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
@@ -291,4 +317,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
