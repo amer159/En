@@ -14,7 +14,7 @@ PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
 # قائمة معرفات الإدارة
-ADMIN_IDS = [5003264608]  
+ADMIN_IDS = [5003264608,5028116353]  
 
 
 def load_words():
