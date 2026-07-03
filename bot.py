@@ -4,17 +4,38 @@ import datetime
 import os
 import asyncio
 import random
+import psycopg2
 
-# قراءة التوكن بأمان من المتغيرات البيئية في Railway
+# قراءة التوكن والروابط البيئية من Railway
 TOKEN = os.getenv("TOKEN")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
 PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة يرجى التواصل مع الإدارة."
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# قائمة معرفات الإدارة
-ADMIN_IDS = [5003264608,5028116353]  
+# 🔒 [تعديل هام] ضع المعرفات الخاصة بك وبالأستاذة هنا
+PRIMARY_ADMIN = 5003264608       # 👈 ضع الـ ID الخاص بك هنا لتصلك الرسائل دائماً
+ADMIN_IDS = [5003264608, 12345]  # 👈 ضع الـ ID الخاص بك والـ ID الخاص بالأستاذة صابرين هنا معاً
+
+
+def init_db():
+    if not DATABASE_URL:
+        print("❌ خطأ: لم يتم العثور على DATABASE_URL في المتغيرات البيئية!")
+        return
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id VARCHAR(50) PRIMARY KEY,
+            status VARCHAR(20) DEFAULT 'active'
+        );
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("✅ تم فحص وإنشاء جدول قاعدة البيانات بنجاح.")
 
 
 def load_words():
@@ -32,44 +53,54 @@ def load_words():
     return words
 
 
-# دالة لحفظ أو تحديث حالة المشترك (active أو blocked)
 def save_user(user_id, status="active"):
-    users_dict = get_users_dict()
-    users_dict[str(user_id)] = status
-    
-    with open("users.txt", "w", encoding="utf-8") as f:
-        for u_id, stat in users_dict.items():
-            f.write(f"{u_id}|{stat}\n")
-
-
-# دالة لجلب قاموس المشتركين مع حالتهم
-def get_users_dict():
-    users_dict = {}
     try:
-        with open("users.txt", "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if "|" in line:
-                    parts = line.split("|")
-                    if len(parts) == 2:
-                        users_dict[parts[0]] = parts[1]
-                elif line:  # للتوافق مع الملفات القديمة التي تحتوي على ID فقط
-                    users_dict[line] = "active"
-    except FileNotFoundError:
-        pass
-    return users_dict
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO users (user_id, status) 
+            VALUES (%s, %s) 
+            ON CONFLICT (user_id) 
+            DO UPDATE SET status = EXCLUDED.status;
+        """, (str(user_id), status))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"خطأ في حفظ المستخدم في قاعدة البيانات: {e}")
 
 
-# دالة لجلب المشتركين حسب حالتهم
 def get_users_by_status(status="active"):
-    users_dict = get_users_dict()
-    return [u_id for u_id, stat in users_dict.items() if stat == status]
+    users = []
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("SELECT user_id FROM users WHERE status = %s;", (status,))
+        rows = cur.fetchall()
+        users = [row[0] for row in rows]
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"خطأ في جلب المستخدمين من قاعدة البيانات: {e}")
+    return users
+
+
+def get_total_users_count():
+    count = 0
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM users;")
+        count = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"خطأ في حساب إجمالي المستخدمين: {e}")
+    return count
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    
-    # حفظ المستخدم كـ نشط وتحديث حالته إذا كان محظوراً سابقاً وعاد وضغط /start
     save_user(user_id, "active")
 
     keyboard = [
@@ -91,10 +122,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📚 اختر إحدى الخدمات من الأزرار التالية:"
     )
 
-    await update.message.reply_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -162,57 +190,41 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             explanation=explanation
         )
 
-    # لوحة التحكم المتقدمة بالإحصائيات التفصيلية وأزرار النسخ الاحتياطي
     elif query.data == "admin_panel":
         if user_id in ADMIN_IDS:
             words = load_words()
             active_users = get_users_by_status("active")
             blocked_users = get_users_by_status("blocked")
-            total_users = len(active_users) + len(blocked_users)
+            total_users = get_total_users_count()
             
             active_pct = (len(active_users) / total_users * 100) if total_users > 0 else 0
             blocked_pct = (len(blocked_users) / total_users * 100) if total_users > 0 else 0
 
             text = (
-                f"⚙️ **لوحة تحكم الإدارة المتقدمة**\n\n"
-                f"📊 **التقرير الإحصائي المفصل:**\n"
+                f"⚙️ **لوحة تحكم الإدارة المتقدمة (قاعدة البيانات السحابية)**\n\n"
+                f"📊 **التقرير الإحصائي المفصل والمحفوظ للأبد:**\n"
                 f"👥 إجمالي الطلاب المسجلين: `{total_users}` مستخدم.\n"
                 f"🟢 الطلاب النشطين (الفعالين): `{len(active_users)}` ({active_pct:.1f}%)\n"
                 f"🔴 قاموا بحظر البوت (Block): `{len(blocked_users)}` ({blocked_pct:.1f}%)\n"
                 f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
                 f"📦 **أدوات النسخ الاحتياطي (Backup):**\n"
-                f"اضغط على الأزرار أدناه لتحميل ملفاتك بأمان على هاتفك."
+                f"يمكنك تحميل قاموس الكلمات الحالي المرفوع بالسيرفر."
             )
             
-            # 🟢 إضافة أزرار تحميل النسخ الاحتياطية في لوحة الأدمن
             admin_keyboard = [
-                [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")],
-                [InlineKeyboardButton("👥 تحميل قائمة المشتركين", callback_data="backup_users")]
+                [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")]
             ]
             
             await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(admin_keyboard), parse_mode="Markdown")
         else:
             await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
 
-    # 🟢 كود إرسال ملف الكلمات كنسخة احتياطية
     elif query.data == "backup_words":
         if user_id in ADMIN_IDS:
             if os.path.exists("words.txt"):
                 await context.bot.send_document(chat_id=user_id, document=open("words.txt", "rb"), filename="words.txt", caption="📦 نسخة احتياطية لملف الكلمات الحالية.")
             else:
                 await query.message.reply_text("❌ ملف words.txt غير موجود حالياً في السيرفر.")
-        else:
-            await query.message.reply_text("❌ غير مسموح.")
-
-    # 🟢 كود إرسال ملف قائمة الطلاب كنسخة احتياطية
-    elif query.data == "backup_users":
-        if user_id in ADMIN_IDS:
-            if os.path.exists("users.txt"):
-                await context.bot.send_document(chat_id=user_id, document=open("users.txt", "rb"), filename="users.txt", caption="📦 نسخة احتياطية لقائمة المشتركين (مع حالاتهم).")
-            else:
-                await query.message.reply_text("❌ ملف users.txt غير موجود حالياً في السيرفر.")
-        else:
-            await query.message.reply_text("❌ غير مسموح.")
 
     elif query.data.startswith("send_broadcast_"):
         if user_id not in ADMIN_IDS:
@@ -225,15 +237,18 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         all_targets = active_users + blocked_users
 
         if not all_targets:
-            await query.message.reply_text("❌ لا يوجد أي مشتركين حالياً.")
+            await query.message.reply_text("❌ لا يوجد أي مشتركين حالياً في قاعدة البيانات.")
             return
 
-        await query.message.reply_text(f"🔄 جاري بدء البث الجماعي المتقدم إلى {len(all_targets)} مستخدم...")
+        await query.message.reply_text(f"🔄 جاري بدء البث الجماعي الآمن إلى {len(all_targets)} مستخدم...")
 
         success_count = 0
         fail_count = 0
 
         for u_id in all_targets:
+            if int(u_id) == user_id:
+                continue
+                
             try:
                 await context.bot.copy_message(chat_id=int(u_id), from_chat_id=user_id, message_id=msg_id)
                 success_count += 1
@@ -244,11 +259,18 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 save_user(u_id, "blocked")
                 continue
 
+        # 🟢 [ميزة التوجيه] إذا قامت الأستاذة صابرين بالإرسال، تصلك نسخة إليك فوراً للمراقبة والمتابعة
+        if user_id != PRIMARY_ADMIN:
+            try:
+                await context.bot.copy_message(chat_id=PRIMARY_ADMIN, from_chat_id=user_id, message_id=msg_id)
+            except Exception:
+                pass
+
         await query.message.reply_text(
-            f"✅ **اكتمل الإرسال الجماعي المتقدم!**\n\n"
+            f"✅ **اكتمل الإرسال الجماعي بنجاح مـطـلـق!**\n\n"
             f"👍 تم التسليم بنجاح: `{success_count}` مستخدم نشط.\n"
-            f"👎 فشل وتسجيل حظر: `{fail_count}` مستخدم تم تحويلهم لغير نشطين.\n"
-            f"📈 تم تحديث الإحصائيات تلقائياً في لوحة التحكم."
+            f"👎 فشل وتسجيل حظر: `{fail_count}` مستخدم تم تحديثهم في قاعدة البيانات.\n"
+            f"📈 الإحصائيات مؤمنة ومحفوظة بالكامل."
         )
 
 
@@ -261,7 +283,7 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
         ]
         await update.message.reply_text(
-            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب مع تحديث الإحصائيات؟",
+            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب وحفظ البيانات سحابياً؟",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -300,12 +322,14 @@ async def daily_auto_send(app: Application):
 
 
 async def main():
+    init_db()
+
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
 
-    print("🤖 Bot is running with Advanced Stats & Backup Tools...")
+    print("🤖 Bot is running with Permanent PostgreSQL Database...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
