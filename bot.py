@@ -12,8 +12,8 @@ PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة 
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# معرف الأدمن الخاص بك للدخول للوحة التحكم
-ADMIN_IDS = [5003264608,]  
+# قائمة معرفات الإدارة
+ADMIN_IDS = [5003264608]  
 
 
 def load_words():
@@ -62,7 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📞 التواصل", callback_data="contact")],
     ]
 
-    # إذا كان المستخدم هو أنت (الأدمن)، يتم إظهار زر لوحة التحكم
+    # التحقق إذا كان المستخدم ضمن قائمة الإدارة
     if user_id in ADMIN_IDS:
         keyboard.append([InlineKeyboardButton("⚙️ لوحة التحكم (الأدمن)", callback_data="admin_panel")])
 
@@ -131,11 +131,57 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"⚙️ **لوحة تحكم الإدارة**\n\n"
                 f"📊 **الإحصائيات الحالية:**\n"
                 f"👥 عدد الطلاب المنضمين للبوت: `{len(users)}` مستخدم.\n"
-                f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة."
+                f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
+                f"📢 **للإرسال الجماعي:**\n"
+                f"أرسل نص الرسالة مسبوقاً بالأمر هكذا:\n"
+                f"`/broadcast مرحبا بكم طلابنا...`"
             )
             await query.message.reply_text(text, parse_mode="Markdown")
         else:
             await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
+
+
+# 🟢 دالة الإرسال الجماعي الجديدة لكافة المشتركين
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    
+    # التأكد أن المرسل هو أدمن لحماية البوت
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ عذراً، هذا الأمر خاص بالإدارة فقط.")
+        return
+
+    # التحقق من وجود نص للرسالة بعد الأمر
+    if not context.args:
+        await update.message.reply_text("❌ يرجى كتابة الرسالة بعد الأمر، مثال:\n`/broadcast نص الرسالة هنا`")
+        return
+
+    # تجميع نص الرسالة الكامل
+    broadcast_text = " ".join(context.args)
+    users = get_users()
+    
+    if not users:
+        await update.message.reply_text("❌ لا يوجد أي مشتركين في البوت حالياً لإرسال الرسالة إليهم.")
+        return
+
+    await update.message.reply_text(f"🔄 جاري بدء الإرسال الجماعي إلى {len(users)} مستخدم... برجاء الانتظار.")
+    
+    success_count = 0
+    fail_count = 0
+    
+    for u_id in users:
+        try:
+            await context.bot.send_message(chat_id=int(u_id), text=broadcast_text)
+            success_count += 1
+            await asyncio.sleep(0.05)  # تفادي حظر التليجرام عند الإرسال السريع
+        except Exception:
+            fail_count += 1
+            continue
+
+    await update.message.reply_text(
+        f"✅ **اكتمل الإرسال الجماعي بنجاح!**\n\n"
+        f"👍 تم التسليم إلى: `{success_count}` مستخدم.\n"
+        f"👎 فشل التسليم إلى: `{fail_count}` مستخدم (قاموا بحظر البوت)."
+    )
 
 
 # وظيفة فحص الوقت والإرسال التلقائي اليومي للكلمات لجميع المشتركين
@@ -144,7 +190,6 @@ async def daily_auto_send(app: Application):
     while True:
         try:
             now = datetime.datetime.now()
-            # يقوم بالإرسال عند الساعة 09:00 صباحاً (يمكنك تعديل الرقم 9 لأي ساعة تريد)
             if now.hour == 9 and now.minute == 0:
                 words = load_words()
                 users = get_users()
@@ -164,22 +209,24 @@ async def daily_auto_send(app: Application):
                     for u_id in users:
                         try:
                             await app.bot.send_message(chat_id=int(u_id), text=text, parse_mode="Markdown")
-                            await asyncio.sleep(0.05)  # تأخير لتفادي حظر التليجرام عند الإرسال الجماعي
+                            await asyncio.sleep(0.05)
                         except Exception:
-                            continue  # يتخطى الحسابات التي قامت بحظر البوت
+                            continue
                     
                     print("✅ تم الإرسال اليومي التلقائي بنجاح لكافة الطلاب.")
-                    await asyncio.sleep(3600)  # الانتظار ساعة كاملة لعدم تكرار الإرسال في نفس الدقيقة
+                    await asyncio.sleep(3600)
         except Exception as e:
             print(f"خطأ في نظام الإرسال التلقائي: {e}")
             
-        await asyncio.sleep(60)  # فحص الوقت مجدداً بعد دقيقة واحدة
+        await asyncio.sleep(60)
 
 
 async def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    # 🟢 ربط أمر الإرسال الجماعي الجديد بالبوت
+    app.add_handler(CommandHandler("broadcast", broadcast))
     app.add_handler(CallbackQueryHandler(buttons))
 
     print("🤖 Bot is running...")
@@ -187,14 +234,12 @@ async def main():
     await app.start()
     await app.updater.start_polling()
 
-    # تشغيل مهمة الإرسال التلقائي كخلفية (Background Task)
     asyncio.create_task(daily_auto_send(app))
 
-    # حلقة التشغيل المستقرة الخاصة بك لإبقاء البوت متصلاً بالسيرفر
     while True:
         await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-                  
+        
