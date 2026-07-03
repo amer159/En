@@ -162,7 +162,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             explanation=explanation
         )
 
-    # 🟢 لوحة التحكم المتقدمة بالإحصائيات التفصيلية
+    # لوحة التحكم المتقدمة بالإحصائيات التفصيلية
     elif query.data == "admin_panel":
         if user_id in ADMIN_IDS:
             words = load_words()
@@ -170,7 +170,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             blocked_users = get_users_by_status("blocked")
             total_users = len(active_users) + len(blocked_users)
             
-            # حساب النسبة المئوية للتفاعل والتسريب
+            # حساب النسبة المئوية للتفاعل
             active_pct = (len(active_users) / total_users * 100) if total_users > 0 else 0
             blocked_pct = (len(blocked_users) / total_users * 100) if total_users > 0 else 0
 
@@ -194,10 +194,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         msg_id = int(query.data.split("_")[2])
-        # نقوم بالإرسال للجميع ونحدث الحالات بناءً على النتيجة اللحظية
         active_users = get_users_by_status("active")
         blocked_users = get_users_by_status("blocked")
-        all_targets = active_users + blocked_users  # محاولة الإرسال للجميع للتأكد من فك الحظر
+        all_targets = active_users + blocked_users
 
         if not all_targets:
             await query.message.reply_text("❌ لا يوجد أي مشتركين حالياً.")
@@ -212,11 +211,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 await context.bot.copy_message(chat_id=int(u_id), from_chat_id=user_id, message_id=msg_id)
                 success_count += 1
-                save_user(u_id, "active")  # تأكيد الحساب نشط
+                save_user(u_id, "active")
                 await asyncio.sleep(0.05)
             except Exception:
                 fail_count += 1
-                save_user(u_id, "blocked")  # رصده كـ حظر وتحديث حالته تلقائياً
+                save_user(u_id, "blocked")
                 continue
 
         await query.message.reply_text(
@@ -236,7 +235,7 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
         ]
         await update.message.reply_text(
-            "📥 تم استلاف المحتوى.\nهل تريد بثه لجميع الطلاب مع تحديث الإحصائيات؟",
+            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب مع تحديث الإحصائيات؟",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -248,7 +247,6 @@ async def daily_auto_send(app: Application):
             now = datetime.datetime.now()
             if now.hour == 9 and now.minute == 0:
                 words = load_words()
-                # جلب الطلاب النشطين فقط لتفادي تضييع موارد السيرفر مع الحسابات المحظورة
                 users = get_users_by_status("active")
                 
                 if words and users:
@@ -267,7 +265,7 @@ async def daily_auto_send(app: Application):
                             await app.bot.send_message(chat_id=int(u_id), text=text, parse_mode="Markdown")
                             await asyncio.sleep(0.05)
                         except Exception:
-                            save_user(u_id, "blocked")  # تحويله لمحضور إذا حظر البوت في الإرسال التلقائي
+                            save_user(u_id, "blocked")
                             continue
                     await asyncio.sleep(3600)
         except Exception as e:
@@ -285,25 +283,6 @@ async def main():
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
-    asyncio.create_task(daily_auto_send(app))
-
-    while True:
-        await asyncio.sleep(3600)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-dler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
-    
-    # التقاط أي رسالة (نص، صورة، ملفات) مرسلة من الأدمن لتجهيز بثها
-    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
-
-    print("🤖 Bot is running...")
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-
     asyncio.create_task(daily_auto_send(app))
 
     while True:
