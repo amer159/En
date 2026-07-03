@@ -3,6 +3,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 import datetime
 import os
 import asyncio
+import random  # 🟢 تم إضافة مكتبة اختيار العشوائيات للاختبارات
 
 # قراءة التوكن بأمان من المتغيرات البيئية في Railway
 TOKEN = os.getenv("TOKEN")
@@ -57,7 +58,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("📚 المجموعة المجانية", callback_data="free")],
         [InlineKeyboardButton("💎 المجموعة المدفوعة", callback_data="premium")],
-        [InlineKeyboardButton("📖 كلمة اليوم", callback_data="today")],
+        # 🟢 تم وضع زر "كلمة اليوم" و "الاختبار التفاعلي" بجانب بعضهما بشكل أنيق
+        [
+            InlineKeyboardButton("📖 كلمة اليوم", callback_data="today"), 
+            InlineKeyboardButton("🧠 اختبار تفاعلي", callback_data="quiz")
+        ],
         [InlineKeyboardButton("💳 معلومات الدفع", callback_data="payment")],
         [InlineKeyboardButton("📞 التواصل", callback_data="contact")],
     ]
@@ -121,6 +126,52 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.message.reply_text(text)
 
+    # 🟢 منطق توليد الاختبار التفاعلي الجديد بالكامل
+    elif query.data == "quiz":
+        words = load_words()
+        
+        # التأكد من وجود كلمات كافية لصنع الخيارات
+        if len(words) < 4:
+            await query.message.reply_text("❌ عذراً، يجب توفر 4 كلمات على الأقل في القاموس لتفعيل الاختبار التفاعلي.")
+            return
+
+        # اختيار كلمة عشوائية لتكون السؤال الصحيح
+        correct_word = random.choice(words)
+        question = f"ما هو المعنى الصحيح للكلمة التالية؟\n\n 🤔  »  {correct_word[0].upper()}  «"
+        
+        # تجميع معاني خاطئة من الكلمات الأخرى (دون تكرار المعنى الصحيح)
+        wrong_meanings = list(set([w[1] for w in words if w[1] != correct_word[1]]))
+        
+        if len(wrong_meanings) < 3:
+            await query.message.reply_text("❌ عذراً، لا توجد معانٍ مختلفة كافية لصنع خيارات الاختبار.")
+            return
+
+        # اختيار 3 خيارات خاطئة عشوائياً ودمجها مع الخيار الصحيح
+        selected_wrong = random.sample(wrong_meanings, 3)
+        options = [correct_word[1]] + selected_wrong
+        
+        # خلط الخيارات لكي لا يكون الجواب الصحيح في نفس الترتيب دائماً
+        random.shuffle(options)
+        
+        # معرفة مكان الجواب الصحيح بعد الخلط ليعرفه نظام تليجرام
+        correct_index = options.index(correct_word[1])
+        
+        # تجهيز جملة المثال كشرح يظهر للطالب فور الإجابة (بحد أقصى 200 حرف لقوانين تليجرام)
+        explanation = f"المثال: {correct_word[2]}"
+        if len(explanation) > 200:
+            explanation = explanation[:197] + "..."
+
+        # إرسال الاختبار كـ Poll من نوع Quiz تفاعلي
+        await context.bot.send_poll(
+            chat_id=query.message.chat_id,
+            question=question,
+            options=options,
+            type="quiz",
+            correct_option_id=correct_index,
+            is_anonymous=False,
+            explanation=explanation
+        )
+
     # استجابة زر لوحة التحكم للأدمن فقط
     elif query.data == "admin_panel":
         if user_id in ADMIN_IDS:
@@ -139,7 +190,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
 
-    # 🟢 تنفيذ البث الجماعي عند ضغط زر التأكيد
+    # تنفيذ البث الجماعي عند ضغط زر التأكيد من الأدمن
     elif query.data.startswith("send_broadcast_"):
         if user_id not in ADMIN_IDS:
             await query.message.reply_text("❌ عذراً، هذا الإجراء خاص بالإدارة فقط.")
@@ -159,10 +210,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for u_id in users:
             try:
-                # دالة copy_message تقوم بنسخ الرسالة الأصلية مهما كان نوعها (نص، صورة، إلخ)
                 await context.bot.copy_message(chat_id=int(u_id), from_chat_id=user_id, message_id=msg_id)
                 success_count += 1
-                await asyncio.sleep(0.05)  # لتفادي حظر التليجرام
+                await asyncio.sleep(0.05)
             except Exception:
                 fail_count += 1
                 continue
@@ -174,11 +224,10 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# 🟢 استقبال أي رسالة أو صورة من الأدمن وتجهيزها للبث
+# استقبال أي رسالة أو صورة من الأدمن وتجهيزها للبث
 async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
 
-    # التحقق من أن المرسل أدمن
     if user_id in ADMIN_IDS:
         msg_id = update.message.message_id
         
@@ -236,7 +285,7 @@ async def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttons))
     
-    # 🟢 التقاط أي رسالة (نص، صورة، ملفات) مرسلة من الأدمن لتجهيز بثها
+    # التقاط أي رسالة (نص، صورة، ملفات) مرسلة من الأدمن لتجهيز بثها
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_admin_message))
 
     print("🤖 Bot is running...")
@@ -252,4 +301,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-        
+    
