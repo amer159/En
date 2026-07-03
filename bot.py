@@ -102,7 +102,7 @@ def get_total_users_count():
     return count
 
 
-# 🧠 دالة الذكاء الاصطناعي مع معالجة آمنة للمفتاح والتعليمات التربوية الصارمة
+# 🧠 دالة الذكاء الاصطناعي المحدثة والمحمية بالكامل من أخطاء الاستجابة وحجب الفلاتر
 def ask_ai_free(user_message):
     if not GEMINI_API_KEY:
         print("❌ خطأ: لم يتم ضبط GEMINI_API_KEY في متغيرات السيرفر!")
@@ -140,6 +140,20 @@ def ask_ai_free(user_message):
         data = res.read().decode("utf-8")
         response_json = json.loads(data)
         
+        # 🛡️ فحص أمني لمنع حدوث خطأ 'candidates' المزعج واستخراج الأخطاء من السيرفر مباشرة
+        if 'error' in response_json:
+            print(f"❌ رسالة خطأ رسمية من جوجل: {response_json['error'].get('message')}")
+            return "I am ready! Please write your sentence in English clearly so I can help you."
+
+        if 'candidates' not in response_json or not response_json['candidates']:
+            # إذا حُجبت الإجابة بسبب فلاتر الأمان أو الكلمات غير اللائقة
+            if 'promptFeedback' in response_json:
+                print(f"⚠️ تم حجب الرسالة بواسطة فلاتر جوجل: {response_json['promptFeedback']}")
+            else:
+                print(f"⚠️ رد غير متوقع من جيمني: {response_json}")
+            return "I couldn't process that sentence. Let's try another English sentence!"
+
+        # استخراج الرد بأمان بعد الفحص والتحقق
         ai_reply = response_json['candidates'][0]['content']['parts'][0]['text']
         return ai_reply.strip()
 
@@ -439,3 +453,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+        
