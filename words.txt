@@ -313,3 +313,53 @@ government|حكومة|The government announced new plans.
 grade|درجة|She got a high grade in the exam.
 graduate|يتخرج|He will graduate next year.
 great|عظيم|You did a great job.
+green|أخضر|The grass is green.
+ground|أرض|The children sat on the ground.
+group|مجموعة|Our group finished first.
+grow|ينمو|Plants grow with water.
+guess|يخمن|Can you guess the answer?
+guest|ضيف|Our guest arrived early.
+guide|دليل|The guide showed us the museum.
+hair|شعر|She has long black hair.
+half|نصف|I ate half of the cake.
+hall|قاعة|The meeting is in the main hall.
+hand|يد|Wash your hands before eating.
+happen|يحدث|Accidents can happen anytime.
+happy|سعيد|The children are happy.
+hard|صعب|This exam is hard.
+hat|قبعة|He is wearing a blue hat.
+hate|يكره|I hate wasting time.
+have|يملك|I have two brothers.
+he|هو|He is my best friend.
+head|رأس|My head hurts.
+health|صحة|Health is more important than money.
+healthy|صحي|Vegetables are healthy.
+hear|يسمع|Can you hear me?
+heart|قلب|She has a kind heart.
+heavy|ثقيل|This bag is very heavy.
+help|يساعد|Please help me.
+her|لها|This is her book.
+here|هنا|Come here, please.
+hero|بطل|The firefighter is a hero.
+high|عالٍ|The mountain is very high.
+hill|تل|They climbed the hill.
+him|إياه|I know him well.
+his|له|His car is new.
+history|تاريخ|History is my favorite subject.
+hold|يمسك|Hold my hand.
+holiday|عطلة|We enjoyed the holiday.
+home|منزل|I am going home.
+hope|يأمل|I hope you succeed.
+horse|حصان|The horse runs fast.
+hospital|مستشفى|She works in a hospital.
+hot|حار|It is very hot today.
+hotel|فندق|We stayed in a nice hotel.
+hour|ساعة|The lesson lasted one hour.
+house|منزل|Their house is beautiful.
+how|كيف|How are you today?
+however|ومع ذلك|However, we continued.
+huge|ضخم|They built a huge bridge.
+human|إنسان|Every human deserves respect.
+hundred|مائة|There are one hundred students.
+hungry|جائع|I am hungry now.
+hurt|يؤلم|My leg still hurts.
