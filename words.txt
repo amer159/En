@@ -99,3 +99,217 @@ book|كتاب|This book is very interesting.
 borrow|يستعير|May I borrow your pen?
 both|كلاهما|Both answers are correct.
 bottle|زجاجة|Please bring a bottle of water.
+box|صندوق|The gift is in the box.
+boy|ولد|The boy is playing outside.
+brain|دماغ|The brain controls the body.
+branch|غصن|A bird is sitting on the branch.
+brave|شجاع|The firefighter is very brave.
+bread|خبز|I eat fresh bread every morning.
+break|يستريح|Let's take a short break.
+breakfast|وجبة الإفطار|Breakfast is the most important meal.
+bridge|جسر|The bridge crosses the river.
+bright|مشرق|The sun is bright today.
+bring|يحضر|Please bring your notebook.
+brother|أخ|My brother is older than me.
+brown|بني|She has brown eyes.
+build|يبني|They want to build a new school.
+building|مبنى|That building is very tall.
+busy|مشغول|I'm busy right now.
+but|لكن|I wanted to go, but it rained.
+butter|زبدة|Spread some butter on the bread.
+buy|يشتري|I need to buy some milk.
+by|بواسطة/بجانب|The book is by the window.
+cake|كعكة|She baked a chocolate cake.
+call|يتصل|I'll call you tonight.
+camera|كاميرا|This camera takes great photos.
+camp|مخيم|We stayed at a summer camp.
+can|يستطيع|I can speak English.
+capital|عاصمة|Algiers is the capital of Algeria.
+car|سيارة|My father bought a new car.
+card|بطاقة|She gave me a birthday card.
+care|رعاية|Parents care for their children.
+careful|حذر|Be careful when crossing the road.
+carry|يحمل|He carried the heavy bag.
+cat|قطة|The cat is sleeping on the sofa.
+catch|يمسك|Can you catch the ball?
+cause|سبب|What caused the problem?
+celebrate|يحتفل|We celebrate Eid together.
+center|مركز|The city center is crowded.
+century|قرن|We live in the 21st century.
+chair|كرسي|Please sit on the chair.
+chance|فرصة|Everyone deserves a second chance.
+change|يغير|People can change their habits.
+cheap|رخيص|This shirt is cheap.
+check|يفحص|Please check your answers.
+child|طفل|Every child needs education.
+choose|يختار|Choose your favorite color.
+church|كنيسة|The church is very old.
+circle|دائرة|Draw a perfect circle.
+city|مدينة|Paris is a beautiful city.
+class|قسم|Our class starts at nine.
+clean|ينظف|Clean your room every day.
+clear|واضح|The sky is clear today.
+climb|يتسلق|The boy can climb the tree.
+clock|ساعة حائط|The clock shows ten o'clock.
+close|يغلق|Please close the door.
+clothes|ملابس|She bought new clothes.
+cloud|سحابة|A white cloud is in the sky.
+cloudy|غائم|Today is cloudy.
+club|نادٍ|He joined the football club.
+coat|معطف|Wear your coat, it's cold.
+coffee|قهوة|I drink coffee every morning.
+cold|بارد|The water is very cold.
+collect|يجمع|Children collect stamps.
+college|كلية|She studies at college.
+color|لون|Blue is my favorite color.
+come|يأتي|Please come early.
+comfortable|مريح|This chair is comfortable.
+common|شائع|This is a common mistake.
+company|شركة|He works for a large company.
+compare|يقارن|Compare the two pictures.
+complete|يكمل|Please complete the exercise.
+computer|حاسوب|The computer is on the desk.
+concern|اهتمام|Thank you for your concern.
+condition|حالة|The patient is in good condition.
+conference|مؤتمر|They attended the conference.
+consider|يعتبر|Please consider my suggestion.
+contain|يحتوي|The box contains books.
+continue|يستمر|Please continue reading.
+control|يسيطر|He can control his emotions.
+cook|يطبخ|My mother cooks delicious food.
+cookie|بسكويت|The child ate a cookie.
+cool|بارد/رائع|This place is cool in summer.
+copy|ينسخ|Copy the sentence carefully.
+corner|زاوية|The shop is on the corner.
+correct|صحيح|Your answer is correct.
+cost|يكلف|The book costs ten dollars.
+cotton|قطن|This shirt is made of cotton.
+could|كان يستطيع|I could swim when I was young.
+country|دولة|Algeria is a beautiful country.
+course|دورة|She joined an English course.
+cousin|ابن العم/الخال|My cousin lives nearby.
+cover|يغطي|Snow covers the mountains.
+cow|بقرة|The cow gives milk.
+create|ينشئ|They want to create a website.
+cross|يعبر|Cross the street carefully.
+crowd|حشد|A large crowd gathered outside.
+cry|يبكي|The baby began to cry.
+cup|كوب|Would you like a cup of tea?
+current|حالي|The current situation is good.
+customer|زبون|The customer was satisfied.
+cut|يقطع|Be careful not to cut your finger.
+eat|يأكل|We eat lunch together.
+education|تعليم|Education is the key to success.
+effect|تأثير|Exercise has a good effect on health.
+egg|بيضة|I eat an egg for breakfast.
+eight|ثمانية|Eight students passed the test.
+either|أيضًا/أي من الاثنين|You can choose either option.
+elder|أكبر سنًا|Respect your elder brother.
+electric|كهربائي|This car is electric.
+electricity|كهرباء|The electricity went out.
+elephant|فيل|The elephant is the largest land animal.
+eleven|أحد عشر|There are eleven players on the team.
+else|آخر|Anything else?
+email|بريد إلكتروني|Send me an email.
+empty|فارغ|The bottle is empty.
+end|نهاية|The movie had a happy end.
+enemy|عدو|Love your enemy.
+energy|طاقة|Solar energy is clean.
+engine|محرك|The engine needs repair.
+engineer|مهندس|My brother is an engineer.
+English|اللغة الإنجليزية|English is spoken worldwide.
+enjoy|يستمتع|I enjoy reading books.
+enough|كافٍ|We have enough food.
+enter|يدخل|Please enter the room.
+environment|بيئة|We should protect the environment.
+equal|متساوٍ|All people are equal.
+especially|خصوصًا|I like fruits, especially apples.
+even|حتى|Even children can understand it.
+evening|المساء|Good evening, everyone.
+event|حدث|The event starts tomorrow.
+ever|أبدًا|Have you ever visited Algeria?
+every|كل|I study every day.
+everyone|الجميع|Everyone is welcome.
+everything|كل شيء|Everything is ready.
+example|مثال|Give me an example.
+excellent|ممتاز|You did an excellent job.
+except|باستثناء|Everyone came except Ali.
+excited|متحمس|The children are excited.
+exercise|تمرين|Exercise keeps you healthy.
+exist|يوجد|Do ghosts exist?
+expect|يتوقع|I expect good results.
+expensive|غالي الثمن|This phone is expensive.
+experience|خبرة|She has a lot of experience.
+explain|يشرح|The teacher explains well.
+eye|عين|She has beautiful eyes.
+face|وجه|Wash your face.
+fact|حقيقة|That is an important fact.
+fail|يفشل|Never fail to try again.
+fall|يسقط|Leaves fall in autumn.
+family|عائلة|My family is very supportive.
+famous|مشهور|He is a famous writer.
+far|بعيد|My school is far from home.
+farm|مزرعة|My uncle owns a large farm.
+farmer|مزارع|The farmer works every day.
+fast|سريع|This train is very fast.
+father|أب|My father is a teacher.
+favorite|المفضل|Blue is my favorite color.
+February|فبراير|February is the second month.
+feel|يشعر|I feel happy today.
+feeling|شعور|Love is a wonderful feeling.
+few|قليل|Only a few students were absent.
+field|حقل|The children played in the field.
+fight|يقاتل|We should fight for justice.
+fill|يملأ|Please fill the bottle with water.
+final|نهائي|Tomorrow is the final exam.
+find|يجد|I can't find my keys.
+fine|بخير|I feel fine today.
+finish|ينهي|She finished her homework.
+fire|نار|The fire is very hot.
+first|الأول|He finished first in the race.
+fish|سمكة|We ate grilled fish.
+five|خمسة|I have five books.
+floor|أرضية|The floor is clean.
+flower|زهرة|This flower smells nice.
+fly|يطير|Birds fly in the sky.
+follow|يتبع|Please follow the instructions.
+food|طعام|Healthy food is important.
+foot|قدم|My foot hurts.
+football|كرة القدم|Football is my favorite sport.
+for|من أجل|This gift is for you.
+forest|غابة|The forest is full of trees.
+forget|ينسى|Don't forget your homework.
+fork|شوكة|Use a fork to eat.
+form|نموذج|Please fill out the form.
+forward|إلى الأمام|Keep moving forward.
+four|أربعة|There are four chairs.
+free|مجاني|The lesson is free.
+Friday|الجمعة|Friday is my favorite day.
+friend|صديق|A true friend is precious.
+friendly|ودود|Our neighbors are friendly.
+from|من|I am from Algeria.
+front|أمام|The school is in front of the park.
+fruit|فاكهة|Fruit is good for your health.
+full|ممتلئ|The bus is full.
+fun|مرح|The trip was a lot of fun.
+funny|مضحك|He told a funny story.
+future|مستقبل|Study hard for your future.
+game|لعبة|Let's play a game.
+garden|حديقة|The flowers are in the garden.
+gas|غاز|The car needs gas.
+general|عام|This is a general rule.
+gentle|لطيف|Be gentle with children.
+get|يحصل على|I get up early every day.
+gift|هدية|Thank you for the gift.
+girl|فتاة|The girl is reading a book.
+give|يعطي|Please give me your pen.
+glad|سعيد|I'm glad to see you.
+glass|كأس|The glass is full of juice.
+go|يذهب|We go to school by bus.
+goal|هدف|My goal is to speak English fluently.
+good|جيد|Today is a good day.
+goodbye|إلى اللقاء|Goodbye, see you tomorrow.
+government|حكومة|The government announced new plans.
+grade|درجة|She got a high grade in the exam.
+graduate|يتخرج|He will graduate next year.
+great|عظيم|You did a great job.
