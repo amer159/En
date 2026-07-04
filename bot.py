@@ -5,10 +5,10 @@ import os
 import asyncio
 import random
 import psycopg2
-import http.client
+import requests  # 🔥 الاعتماد على المكتبة المستقرة لحل مشكلة الاتصال بصورة نهائية
 import json
 
-# 🔑 إعداد التوكن، قاعدة البيانات، ومفتاح الذكاء الاصطناعي بشكل آمن تماماً عبر المتغيرات البيئية
+# 🔑 جلب المتغيرات البيئية من السيرفر بشكل آمن
 TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -18,7 +18,7 @@ PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة 
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 CONTACT_TEXT = "@amerhhk"
 
-# 🔒 المعرفات الخاصة بالمسؤولين
+# 🔒 معرفات المسؤولين والأدمن
 PRIMARY_ADMIN = 5003264608       
 ADMIN_IDS = [5003264608, 5028116353]  
 
@@ -102,17 +102,16 @@ def get_total_users_count():
     return count
 
 
-# 🧠 دالة الذكاء الاصطناعي المحدثة والمحمية بالكامل من أخطاء الاستجابة وحجب الفلاتر
+# 🧠 دالة الاتصال بـ Gemini AI - معالجة قوية ومؤمنة ضد الحجب والرموز الخاصة بالرابط
 def ask_ai_free(user_message):
     if not GEMINI_API_KEY:
         print("❌ خطأ: لم يتم ضبط GEMINI_API_KEY في متغيرات السيرفر!")
         return "The AI assistant is updating. Please try again in a moment!"
         
     try:
-        host = "generativelanguage.googleapis.com"
-        url = f"/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        # الرابط المباشر والكامل لجوجل جيمني
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         
-        # 📋 تعليمات لضمان الترجمة الفورية للعربية والتصحيح الدقيق للإنجليزية
         system_instruction = (
             "You are a strict and helpful English teacher bot. You must follow these two rules carefully:\n"
             "1. If the student writes in ANY language other than English (like Arabic), DO NOT answer their question. "
@@ -133,33 +132,28 @@ def ask_ai_free(user_message):
         }
         
         headers = {"Content-Type": "application/json"}
-        conn = http.client.HTTPSConnection(host)
-        conn.request("POST", url, body=json.dumps(payload), headers=headers)
         
-        res = conn.getresponse()
-        data = res.read().decode("utf-8")
-        response_json = json.loads(data)
+        # إرسال الطلب بشكل مستقر وتعيين مهلة حماية 10 ثوانٍ
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response_json = response.json()
         
-        # 🛡️ فحص أمني لمنع حدوث خطأ 'candidates' المزعج واستخراج الأخطاء من السيرفر مباشرة
+        # فحص إذا أرجع السيرفر رسالة خطأ صريحة من جوجل
         if 'error' in response_json:
-            print(f"❌ رسالة خطأ رسمية من جوجل: {response_json['error'].get('message')}")
+            print(f"❌ خطأ قادم من جيمني API: {response_json['error'].get('message')}")
             return "I am ready! Please write your sentence in English clearly so I can help you."
 
+        # حماية ضد خطأ الـ 'candidates' الشهير في حال الحجب أو التصفية الأمنية للكلمات
         if 'candidates' not in response_json or not response_json['candidates']:
-            # إذا حُجبت الإجابة بسبب فلاتر الأمان أو الكلمات غير اللائقة
-            if 'promptFeedback' in response_json:
-                print(f"⚠️ تم حجب الرسالة بواسطة فلاتر جوجل: {response_json['promptFeedback']}")
-            else:
-                print(f"⚠️ رد غير متوقع من جيمني: {response_json}")
+            print(f"⚠️ استجابة غير متوقعة أو حجب بواسطة فلاتر الحماية: {response_json}")
             return "I couldn't process that sentence. Let's try another English sentence!"
 
-        # استخراج الرد بأمان بعد الفحص والتحقق
+        # استخراج الإجابة بسلاسة بعد تخطي الفحوصات الأمنية
         ai_reply = response_json['candidates'][0]['content']['parts'][0]['text']
         return ai_reply.strip()
 
     except Exception as e:
-        print(f"Gemini API Error: {e}")
-        return "I am ready! Let's practice English together. Please write your sentence in English!"
+        print(f"🔥 خطأ حرج في دالة الذكاء الاصطناعي: {e}")
+        return "I am ready to help you! Please type any sentence in English."
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -273,7 +267,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🔴 قاموا بحظر البوت (Block): `{len(blocked_users)}` ({blocked_pct:.1f}%)\n"
                 f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
                 f"📦 **أدوات النسخ الاحتياطي (Backup):**\n"
-                f"يمكنك تحميل ملف الكلمات أو استخراج ملف المشتركين (اليوزرس) حياً من الداتا بيس السحابية."
+                f"يمكنك تحميل ملف الكلمات أو استخراج ملف المشتركين حياً من الداتا بيس السحابية."
             )
             
             admin_keyboard = [
@@ -453,4 +447,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-        
