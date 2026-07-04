@@ -1,4 +1,4 @@
 python-telegram-bot==22.3
 deep-translator
 psycopg2-binary
-
+requests
