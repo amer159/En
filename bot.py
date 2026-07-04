@@ -5,13 +5,10 @@ import os
 import asyncio
 import random
 import psycopg2
-import requests  # 🔥 الاعتماد على المكتبة المستقرة لحل مشكلة الاتصال بصورة نهائية
-import json
 
-# 🔑 جلب المتغيرات البيئية من السيرفر بشكل آمن
+# 🔑 جلب المتغيرات البيئية من السيرفر بشكل آمن (تم الاستغناء عن مفتاح جيمني)
 TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
 PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة يرجى التواصل مع الإدارة."
@@ -102,60 +99,6 @@ def get_total_users_count():
     return count
 
 
-# 🧠 دالة الاتصال بـ Gemini AI - معالجة قوية ومؤمنة ضد الحجب والرموز الخاصة بالرابط
-def ask_ai_free(user_message):
-    if not GEMINI_API_KEY:
-        print("❌ خطأ: لم يتم ضبط GEMINI_API_KEY في متغيرات السيرفر!")
-        return "The AI assistant is updating. Please try again in a moment!"
-        
-    try:
-        # الرابط المباشر والكامل لجوجل جيمني
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-        
-        system_instruction = (
-            "You are a strict and helpful English teacher bot. You must follow these two rules carefully:\n"
-            "1. If the student writes in ANY language other than English (like Arabic), DO NOT answer their question. "
-            "Instead, ONLY translate their message into English and nothing else.\n"
-            "2. If the student writes in English, check their message for any spelling or grammatical mistakes. "
-            "Kindly point out the mistakes, provide the correct version, and then reply to them shortly in English to keep the conversation going.\n"
-            "Keep all responses short, clear, and perfectly formatted for English learners."
-        )
-        
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": f"{system_instruction}\n\nStudent's message: {user_message}"}
-                    ]
-                }
-            ]
-        }
-        
-        headers = {"Content-Type": "application/json"}
-        
-        # إرسال الطلب بشكل مستقر وتعيين مهلة حماية 10 ثوانٍ
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
-        response_json = response.json()
-        
-        # فحص إذا أرجع السيرفر رسالة خطأ صريحة من جوجل
-        if 'error' in response_json:
-            print(f"❌ خطأ قادم من جيمني API: {response_json['error'].get('message')}")
-            return "I am ready! Please write your sentence in English clearly so I can help you."
-
-        # حماية ضد خطأ الـ 'candidates' الشهير في حال الحجب أو التصفية الأمنية للكلمات
-        if 'candidates' not in response_json or not response_json['candidates']:
-            print(f"⚠️ استجابة غير متوقعة أو حجب بواسطة فلاتر الحماية: {response_json}")
-            return "I couldn't process that sentence. Let's try another English sentence!"
-
-        # استخراج الإجابة بسلاسة بعد تخطي الفحوصات الأمنية
-        ai_reply = response_json['candidates'][0]['content']['parts'][0]['text']
-        return ai_reply.strip()
-
-    except Exception as e:
-        print(f"🔥 خطأ حرج في دالة الذكاء الاصطناعي: {e}")
-        return "I am ready to help you! Please type any sentence in English."
-
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     save_user(user_id, "active")
@@ -176,9 +119,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = (
         "👋 مرحبًا بك في بوت الأستاذة صابرين لتعليم اللغة الإنجليزية.\n\n"
-        "🤖 أنا الآن مدعوم بذكاء اصطناعي متكامل (Gemini AI)! "
-        "يمكنك الكتابة لي بالإنجليزية لأصحح لك أخطاءك، أو اكتب بأي لغة أخرى لأترجمها لك فوراً.\n\n"
-        "📚 أو اختر إحدى الخدمات من الأزرار التالية:"
+        "✨ يسعدني مساعدتك في تطوير لغتك الإنجليزية اليوم!\n"
+        "الرجاء اختيار الخدمة التي تريدها من الأزرار التالية 👇:"
     )
 
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -359,24 +301,14 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+# ✉️ معالجة الرسائل العادية (تم إلغاء وظيفة الـ AI، وتحويلها لتوجيه وبث الأدمن)
 async def handle_user_and_admin_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text:
-        user_id = update.message.from_user.id if update.message else None
-        if user_id in ADMIN_IDS:
-            msg_id = update.message.message_id
-            keyboard = [
-                [InlineKeyboardButton("📢 إرسال جماعي للكل", callback_data=f"send_broadcast_{msg_id}")],
-                [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
-            ]
-            await update.message.reply_text(
-                "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب وحفظ البيانات سحابياً؟",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+    if not update.message:
         return
 
     user_id = update.message.from_user.id
-    user_text = update.message.text
 
+    # إذا كان المرسل أدمن، يستقبل البوت رسالته لتهيئتها للبث الجماعي
     if user_id in ADMIN_IDS:
         msg_id = update.message.message_id
         keyboard = [
@@ -388,10 +320,23 @@ async def handle_user_and_admin_messages(update: Update, context: ContextTypes.D
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
+        # إذا كان مستخدماً عادياً، نوجهه للأزرار الرسمية للبوت عوضاً عن الـ AI
         save_user(user_id, "active")
-        await context.bot.send_chat_action(chat_id=user_id, action="typing")
-        ai_reply = ask_ai_free(user_text)
-        await update.message.reply_text(ai_reply)
+        
+        keyboard = [
+            [InlineKeyboardButton("📚 المجموعة المجانية", callback_data="free")],
+            [InlineKeyboardButton("💎 المجموعة المدفوعة", callback_data="premium")],
+            [
+                InlineKeyboardButton("📖 كلمة اليوم", callback_data="today"), 
+                InlineKeyboardButton("🧠 اختبار تفاعلي", callback_data="quiz")
+            ],
+        ]
+        
+        reply_text = (
+            "⚠️ أهلاً بك! يرجى استخدام القائمة الرئيسية والأزرار بالأسفل للاستفادة من خدمات البوت "
+            "(مثل عرض كلمة اليوم أو دخول الاختبار التفاعلي)، حيث أن الشات المباشر غير متاح حالياً."
+        )
+        await update.message.reply_text(reply_text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
 async def daily_auto_send(app: Application):
@@ -435,7 +380,7 @@ async def main():
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_user_and_admin_messages))
 
-    print("🤖 Bot is running with Permanent PostgreSQL Database & Gemini AI Integration...")
+    print("🤖 Bot is running with Permanent PostgreSQL Database (No-AI Version)...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
@@ -447,3 +392,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+                
