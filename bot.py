@@ -6,7 +6,7 @@ import asyncio
 import random
 import psycopg2
 
-# 🔑 جلب المتغيرات البيئية من السيرفر بشكل آمن (تم الاستغناء عن مفتاح جيمني)
+# 🔑 جلب المتغيرات البيئية من السيرفر بشكل آمن
 TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -301,42 +301,69 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ✉️ معالجة الرسائل العادية (تم إلغاء وظيفة الـ AI، وتحويلها لتوجيه وبث الأدمن)
+# ✉️ نظام معالجة الرسائل والرد الدعم الفني الذكي والتواصل بين الأدمن والمستخدمين دون كشف الهوية الشخصية
 async def handle_user_and_admin_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
 
     user_id = update.message.from_user.id
+    user_name = update.message.from_user.full_name
+    username = f"@{update.message.from_user.username}" if update.message.from_user.username else "بدون يوزر"
 
-    # إذا كان المرسل أدمن، يستقبل البوت رسالته لتهيئتها للبث الجماعي
+    # 1️⃣ الحالة الأولى: مرسل الرسالة هو الأدمن
     if user_id in ADMIN_IDS:
+        # أ) إذا قام الأدمن بعمل "Reply" (رد) على رسالة مستخدم تم تحويلها سابقاً لكي يجيبه وحده
+        if update.message.reply_to_message:
+            reply_text = update.message.reply_to_message.text or update.message.reply_to_message.caption
+            
+            if reply_text and "🆔 ID:" in reply_text:
+                try:
+                    # استخراج معرف المستخدم المستهدف من النص تلقائياً
+                    target_user_id = int(reply_text.split("🆔 ID:")[1].strip().split("\n")[0])
+                    
+                    # إرسال رد الأدمن مباشرة إلى هذا المستخدم وحده (باسم البوت فقط مخفياً تماماً)
+                    if update.message.text:
+                        await context.bot.send_message(chat_id=target_user_id, text=f"💬 **رد من الإدارة:**\n\n{update.message.text}")
+                    else:
+                        await context.bot.copy_message(chat_id=target_user_id, from_chat_id=user_id, message_id=update.message.message_id)
+                    
+                    await update.message.reply_text("✅ تم إرسال ردك إلى المستخدم بنجاح دون إظهار حسابك.")
+                    return
+                except Exception as e:
+                    await update.message.reply_text(f"❌ فشل إرسال الرد للمستخدم، قد يكون حظر البوت أو المعرف خاطئ.\nالخطأ: {e}")
+                    return
+
+        # ب) إذا كتب الأدمن رسالة عادية (بدون رد)، تفتح له خيار البث الجماعي للكل
         msg_id = update.message.message_id
         keyboard = [
             [InlineKeyboardButton("📢 إرسال جماعي للكل", callback_data=f"send_broadcast_{msg_id}")],
             [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
         ]
         await update.message.reply_text(
-            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب وحفظ البيانات سحابياً؟",
+            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب كإعلان جماعي؟",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+    # 2️⃣ الحالة الثانية: مرسل الرسالة مستخدم عادي (يتم تحويل رسالته للأدمن فوراً ليردوا عليه)
     else:
-        # إذا كان مستخدماً عادياً، نوجهه للأزرار الرسمية للبوت عوضاً عن الـ AI
         save_user(user_id, "active")
         
-        keyboard = [
-            [InlineKeyboardButton("📚 المجموعة المجانية", callback_data="free")],
-            [InlineKeyboardButton("💎 المجموعة المدفوعة", callback_data="premium")],
-            [
-                InlineKeyboardButton("📖 كلمة اليوم", callback_data="today"), 
-                InlineKeyboardButton("🧠 اختبار تفاعلي", callback_data="quiz")
-            ],
-        ]
+        info_header = f"📩 **رسالة جديدة من مستخدم**\n👤 الاسم: {user_name}\n🔗 اليوزر: {username}\n🆔 ID: {user_id}\n\n📝 **نص الرسالة:**\n"
         
-        reply_text = (
-            "⚠️ أهلاً بك! يرجى استخدام القائمة الرئيسية والأزرار بالأسفل للاستفادة من خدمات البوت "
-            "(مثل عرض كلمة اليوم أو دخول الاختبار التفاعلي)، حيث أن الشات المباشر غير متاح حالياً."
-        )
-        await update.message.reply_text(reply_text, reply_markup=InlineKeyboardMarkup(keyboard))
+        # إرسال الرسالة إلى جميع الإداريين بشكل منظم يسهل الرد عليه
+        for admin in ADMIN_IDS:
+            try:
+                if update.message.text:
+                    await context.bot.send_message(chat_id=admin, text=f"{info_header}{update.message.text}")
+                else:
+                    # إذا أرسل صورة أو ملف، يتم تحويلها مع النص التوجيهي
+                    caption = f"{info_header}{update.message.caption if update.message.caption else ''}"
+                    await context.bot.copy_message(chat_id=admin, from_chat_id=user_id, message_id=update.message.message_id, caption=caption)
+            except Exception:
+                continue
+
+        # طمأنة المستخدم بأنه تم تسليم رسالته للإدارة
+        await update.message.reply_text("📥 تم استلام رسالتك وتوجيهها للأستاذة صابرين بنجاح. سيتم الرد عليك هنا فوراً عند الاطلاع.")
 
 
 async def daily_auto_send(app: Application):
@@ -380,7 +407,7 @@ async def main():
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_user_and_admin_messages))
 
-    print("🤖 Bot is running with Permanent PostgreSQL Database (No-AI Version)...")
+    print("🤖 Bot is running with Support Chat & Permanent Database...")
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
@@ -392,4 +419,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-                
+    
