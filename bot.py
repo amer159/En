@@ -11,9 +11,13 @@ TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
-PREMIUM_GROUP_INFO = "للانضمام إلى المجموعة المدفوعة يرجى التواصل مع الإدارة."
+# 💎 تم تحديث نص المجموعة المدفوعة لتوجيه المستخدمين لمراسلة البوت مباشرة للاستفسار
+PREMIUM_GROUP_INFO = (
+    "للانضمام إلى المجموعة المدفوعة أو الاستفسار عن الأسعار، "
+    "يمكنك كتابة رسالتك وإرسالها هنا داخل هذا البوت مباشرة، "
+    "وسيجيبك فريق الإدارة في أسرع وقت ممكن! 📬"
+)
 PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
-CONTACT_TEXT = "@amerhhk"
 
 # 🔒 معرفات المسؤولين والأدمن
 PRIMARY_ADMIN = 5003264608       
@@ -103,6 +107,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     save_user(user_id, "active")
 
+    # 🛠️ تم إزالة زر التواصل وحذف متغير الحساب الشخصي بالكامل لحماية خصوصيتك
     keyboard = [
         [InlineKeyboardButton("📚 المجموعة المجانية", callback_data="free")],
         [InlineKeyboardButton("💎 المجموعة المدفوعة", callback_data="premium")],
@@ -111,7 +116,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🧠 اختبار تفاعلي", callback_data="quiz")
         ],
         [InlineKeyboardButton("💳 معلومات الدفع", callback_data="payment")],
-        [InlineKeyboardButton("📞 التواصل", callback_data="contact")],
     ]
 
     if user_id in ADMIN_IDS:
@@ -120,7 +124,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "👋 مرحبًا بك في بوت الأستاذة صابرين لتعليم اللغة الإنجليزية.\n\n"
         "✨ يسعدني مساعدتك في تطوير لغتك الإنجليزية اليوم!\n"
-        "الرجاء اختيار الخدمة التي تريدها من الأزرار التالية 👇:"
+        "الرجاء اختيار الخدمة التي تريدها من الأزرار التالية أو أرسل استفسارك مباشرة في الشات 👇:"
     )
 
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -139,9 +143,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "payment":
         await query.message.reply_text(PAYMENT_TEXT)
-
-    elif query.data == "contact":
-        await query.message.reply_text(f"📞 للتواصل:\n{CONTACT_TEXT}")
 
     elif query.data == "today":
         words = load_words()
@@ -301,7 +302,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-# ✉️ نظام معالجة الرسائل والرد الدعم الفني الذكي والتواصل بين الأدمن والمستخدمين دون كشف الهوية الشخصية
+# ✉️ نظام معالجة الرسائل والرد الدعم الفني والتواصل بين الأدمن والمستخدمين دون كشف الهوية الشخصية
 async def handle_user_and_admin_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
@@ -419,4 +420,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
+        
