@@ -11,7 +11,6 @@ TOKEN = os.getenv("TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 FREE_GROUP_LINK = "https://t.me/sabrin_englsh"
-# 💎 تم تحديث نص المجموعة المدفوعة لتوجيه المستخدمين لمراسلة البوت مباشرة للاستفسار
 PREMIUM_GROUP_INFO = (
     "للانضمام إلى المجموعة المدفوعة أو الاستفسار عن الأسعار، "
     "يمكنك كتابة رسالتك وإرسالها هنا داخل هذا البوت مباشرة، "
@@ -23,22 +22,42 @@ PAYMENT_TEXT = "💳 BaridiMob: 00799999002543176470\n📄 CCP: 0025431764/70"
 PRIMARY_ADMIN = 5003264608       
 ADMIN_IDS = [5003264608, 5028116353]  
 
+# 📝 بنك الأسئلة المتتالية المستخرجة من ملف face2face الخاص بكِ
+QUIZ_QUESTIONS = [
+    {"q": "TOM: How are you?\nSTEVE: _________", "options": ["I'm fine, thanks", "I'm Steve", "Yes please."], "correct": 0, "exp": "الرد الطبيعي على السؤال عن الحال."},
+    {"q": "LIZ: What are these?\nJANE: _________ my birthday cards.", "options": ["They're", "This is", "It's"], "correct": 0, "exp": "نستخدم They're لأن cards جمع."},
+    {"q": "Are you married _________ single?", "options": ["and", "or", "but"], "correct": 1, "exp": "نستخدم or للاختيار بين شيئين."},
+    {"q": "What's your email _________?", "options": ["address", "name", "number"], "correct": 0, "exp": "البريد الإلكتروني يسمى email address."},
+    {"q": "Jim _________ have a car.", "options": ["doesn't", "isn't", "don't"], "correct": 0, "exp": "نفي الفعل المضارع مع المفرد (Jim) يكون بـ doesn't."},
+    {"q": "I _________ to Italy for my holiday last year.", "options": ["went", "go", "was", "were"], "correct": 0, "exp": "بسبب وجود last year نختار الماضي من go وهو went."},
+    {"q": "I didn't _________ TV last night.", "options": ["watched", "watching", "watch", "not watched"], "correct": 2, "exp": "بعد didn't يأتي الفعل في التصريف الأول (المصدر)."},
+    {"q": "London is _________ expensive than New York.", "options": ["more", "very", "too", "quite"], "correct": 0, "exp": "في المقارنة بين صفتين طويلتين نستخدم more ... than."},
+    {"q": "Have you ever _________ to Australia?", "options": ["been", "go", "be", "went"], "correct": 0, "exp": "مع المضارع التام (Have you ever) نستخدم التصريف الثالث been."},
+    {"q": "You _________ to study hard if you want to pass your exams.", "options": ["must", "should", "have", "supposed"], "correct": 2, "exp": "الخيار الوحيد الذي يأتي بعده حرف الجر 'to' ليعطي معنى الإلزام هو have to."}
+]
+
+# 🎙️ مواضيع التحدث المقترحة 
+SPEAKING_TOPICS = [
+    {"id": "topic_1", "title": "👨‍👩‍👧‍👦 Talk about your family"},
+    {"id": "topic_2", "title": "📅 Talk about your daily routine"},
+    {"id": "topic_3", "title": "✈️ Talk about your last holiday"},
+    {"id": "topic_4", "title": "💻 Talk about your dream job"}
+]
+
 
 def init_db():
     if not DATABASE_URL:
         print("❌ خطأ: لم يتم العثور على DATABASE_URL في المتغيرات البيئية!")
         return
-    conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id VARCHAR(50) PRIMARY KEY,
-            status VARCHAR(20) DEFAULT 'active'
-        );
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
+    with psycopg2.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id VARCHAR(50) PRIMARY KEY,
+                    status VARCHAR(20) DEFAULT 'active'
+                );
+            """)
+            conn.commit()
     print("✅ تم فحص وإنشاء جدول قاعدة البيانات بنجاح.")
 
 
@@ -59,17 +78,15 @@ def load_words():
 
 def save_user(user_id, status="active"):
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO users (user_id, status) 
-            VALUES (%s, %s) 
-            ON CONFLICT (user_id) 
-            DO UPDATE SET status = EXCLUDED.status;
-        """, (str(user_id), status))
-        conn.commit()
-        cur.close()
-        conn.close()
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO users (user_id, status) 
+                    VALUES (%s, %s) 
+                    ON CONFLICT (user_id) 
+                    DO UPDATE SET status = EXCLUDED.status;
+                """, (str(user_id), status))
+                conn.commit()
     except Exception as e:
         print(f"خطأ في حفظ المستخدم في قاعدة البيانات: {e}")
 
@@ -77,13 +94,11 @@ def save_user(user_id, status="active"):
 def get_users_by_status(status="active"):
     users = []
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        cur.execute("SELECT user_id FROM users WHERE status = %s;", (status,))
-        rows = cur.fetchall()
-        users = [row[0] for row in rows]
-        cur.close()
-        conn.close()
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT user_id FROM users WHERE status = %s;", (status,))
+                rows = cur.fetchall()
+                users = [row[0] for row in rows]
     except Exception as e:
         print(f"خطأ في جلب المستخدمين من قاعدة البيانات: {e}")
     return users
@@ -92,12 +107,10 @@ def get_users_by_status(status="active"):
 def get_total_users_count():
     count = 0
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM users;")
-        count = cur.fetchone()[0]
-        cur.close()
-        conn.close()
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM users;")
+                count = cur.fetchone()[0]
     except Exception as e:
         print(f"خطأ في حساب إجمالي المستخدمين: {e}")
     return count
@@ -107,14 +120,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     save_user(user_id, "active")
 
-    # 🛠️ تم إزالة زر التواصل وحذف متغير الحساب الشخصي بالكامل لحماية خصوصيتك
+    # إزالة زر المحادثة من القائمة الرئيسية لكي لا يظهر إلا بعد انتهاء الكتابي تماماً
     keyboard = [
         [InlineKeyboardButton("📚 المجموعة المجانية", callback_data="free")],
         [InlineKeyboardButton("💎 المجموعة المدفوعة", callback_data="premium")],
-        [
-            InlineKeyboardButton("📖 كلمة اليوم", callback_data="today"), 
-            InlineKeyboardButton("🧠 اختبار تفاعلي", callback_data="quiz")
-        ],
+        [InlineKeyboardButton("📝 اختبر مستواك (كتابي)", callback_data="start_quiz")],
+        [InlineKeyboardButton("📖 كلمة اليوم", callback_data="today")],
         [InlineKeyboardButton("💳 معلومات الدفع", callback_data="payment")],
     ]
 
@@ -130,9 +141,67 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
+async def send_next_question(chat_id, context: ContextTypes.DEFAULT_TYPE, user_data, update_query=None):
+    current_index = user_data.get("current_question", 0)
+    
+    # عند انتهاء أسئلة الاختبار الكتابي بالكامل
+    if current_index >= len(QUIZ_QUESTIONS):
+        score = user_data.get("score", 0)
+        total = len(QUIZ_QUESTIONS)
+        
+        # جلب بيانات الطالب لإرسالها للأدمن
+        user_name = update_query.from_user.full_name if update_query else "مستعمل"
+        username = f"@{update_query.from_user.username}" if update_query and update_query.from_user.username else "بدون يوزر"
+        user_id = update_query.from_user.id if update_query else chat_id
+        
+        # إنشاء زر اختبار المحادثة ليظهر الآن فقط بعد انتهاء الكتابي
+        speaking_keyboard = [[InlineKeyboardButton("🎙️ اختبر مستواك (محادثة)", callback_data="speaking_challenge")]]
+        
+        # 1. إشعار الطالب بالانتظار مع إظهار زر الانتقال لاختبار المحادثة
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "🎉 **أحسنت! لقد أكملت الجزء الأول (الاختبار الكتابي) بنجاح.**\n\n"
+                "يرجى انتظار رسالة من الأستاذة صابرين بها نتيجة امتحانك وتقييم مستواك الإجمالي! ⏳\n\n"
+                "👇 والآن انتقل للجزء الثاني والأخير من اختبار تحديد المستوى بالضغط على الزر أدناه لإرسال رسالتك الصوتية:"
+            ),
+            reply_markup=InlineKeyboardMarkup(speaking_keyboard)
+        )
+        
+        # 2. إرسال النتيجة إلى لوحة تحكم الأدمن فوراً
+        admin_alert = (
+            f"📊 **نتيجة اختبار كتابي جديدة**\n\n"
+            f"👤 الطالب: {user_name}\n"
+            f"🔗 اليوزر: {username}\n"
+            f"🆔 ID: {user_id}\n\n"
+            f"📈 النتيجة التلقائية: `{score}` من `{total}`\n"
+            f"✍️ يمكنكِ الرد على هذه الرسالة لاحقاً لإرسال التقييم النهائي للطالب."
+        )
+        for admin in ADMIN_IDS:
+            try:
+                await context.bot.send_message(chat_id=admin, text=admin_alert)
+            except Exception:
+                continue
+                
+        user_data.clear()
+        return
+
+    q_data = QUIZ_QUESTIONS[current_index]
+    keyboard = []
+    for idx, option in enumerate(q_data["options"]):
+        keyboard.append([InlineKeyboardButton(option, callback_data=f"answer_{idx}")])
+        
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=f"📝 **السؤال {current_index + 1} من {len(QUIZ_QUESTIONS)}:**\n\n{q_data['q']}",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
+    user_data = context.user_data
     await query.answer()
 
     if query.data == "free":
@@ -159,125 +228,99 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.message.reply_text(text)
 
-    elif query.data == "quiz":
-        words = load_words()
-        if len(words) < 4:
-            await query.message.reply_text("❌ عذراً، يجب توفر 4 كلمات على الأقل في القاموس لتفعيل الاختبار التفاعلي.")
+    # 📥 بدء اختبار تحديد المستوى (كتابي)
+    elif query.data == "start_quiz":
+        user_data["current_question"] = 0
+        user_data["score"] = 0
+        await query.message.reply_text("🚀 سيبدأ اختبار تحديد المستوى الآن! أجب على الأسئلة التالية:")
+        await send_next_question(query.message.chat_id, context, user_data, query)
+
+    # 📥 معالجة الإجابات للكتابي
+    elif query.data.startswith("answer_"):
+        if "current_question" not in user_data:
+            await query.message.reply_text("❌ انتهى هذا الاختبار أو أصبح قديماً. يرجى الضغط على 'اختبر مستواك (كتابي)' للبدء مجدداً.")
             return
-
-        correct_word = random.choice(words)
-        question = f"ما هو المعنى الصحيح للكلمة التالية؟\n\n 🤔  »  {correct_word[0].upper()}  «"
-        wrong_meanings = list(set([w[1] for w in words if w[1] != correct_word[1]]))
+            
+        selected_idx = int(query.data.split("_")[1])
+        current_index = user_data["current_question"]
+        q_data = QUIZ_QUESTIONS[current_index]
         
-        if len(wrong_meanings) < 3:
-            await query.message.reply_text("❌ عذراً، لا توجد معانٍ مختلفة كافية لصنع خيارات الاختبار.")
-            return
+        if selected_idx == q_data["correct"]:
+            user_data["score"] += 1
+            feedback = "✅ تم تسجيل إجابتك بنجاح!"
+        else:
+            feedback = "✅ تم تسجيل إجابتك بنجاح!"
+            
+        await query.message.reply_text(feedback, parse_mode="Markdown")
+        user_data["current_question"] += 1
+        await send_next_question(query.message.chat_id, context, user_data, query)
 
-        selected_wrong = random.sample(wrong_meanings, 3)
-        options = [correct_word[1]] + selected_wrong
-        random.shuffle(options)
-        correct_index = options.index(correct_word[1])
-        
-        explanation = f"المثال: {correct_word[2]}"
-        if len(explanation) > 200:
-            explanation = explanation[:197] + "..."
-
-        await context.bot.send_poll(
-            chat_id=query.message.chat_id,
-            question=question,
-            options=options,
-            type="quiz",
-            correct_option_id=correct_index,
-            is_anonymous=False,
-            explanation=explanation
+    # 🎙️ اختبار تحديد المستوى (محادثة) - يظهر ويُستدعى بعد انتهاء الكتابي
+    elif query.data == "speaking_challenge":
+        keyboard = []
+        for topic in SPEAKING_TOPICS:
+            keyboard.append([InlineKeyboardButton(topic["title"], callback_data=f"select_{topic['id']}")])
+            
+        await query.message.reply_text(
+            "🎙️ **مرحباً بك في اختبار تحديد مستوى المحادثة!**\n\n"
+            "الرجاء اختيار أحد المواضيع التالية لكي تتحدث عنها 👇:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
+    # 🎙️ معالجة اختيار الموضوع للمحادثة
+    elif query.data.startswith("select_"):
+        topic_id = query.data.replace("select_", "")
+        selected_topic = next((t["title"] for t in SPEAKING_TOPICS if t["id"] == topic_id), "موضوع غير معروف")
+        
+        user_data["chosen_topic"] = selected_topic
+        
+        await query.message.reply_text(
+            f"🎯 لقد اخترت موضوع:\n*{selected_topic}*\n\n"
+            f"قم الآن بتسجيل بصمة صوتية (Voice Note) تتكلم فيها بالإنجليزية حول هذا الموضوع (يفضل ألا تتجاوز دقيقتين).\n"
+            f"سيرسل البوت تسجيلك للأستاذة صابرين لتقييم نطقك وقواعدك وتحديد مستواك! ⏳",
+            parse_mode="Markdown"
+        )
+
+    # باقي كود لوحة تحكم الأدمن...
     elif query.data == "admin_panel":
         if user_id in ADMIN_IDS:
             words = load_words()
             active_users = get_users_by_status("active")
             blocked_users = get_users_by_status("blocked")
             total_users = get_total_users_count()
-            
             active_pct = (len(active_users) / total_users * 100) if total_users > 0 else 0
-            blocked_pct = (len(blocked_users) / total_users * 100) if total_users > 0 else 0
-
-            text = (
-                f"⚙️ **لوحة تحكم الإدارة المتقدمة (قاعدة البيانات السحابية)**\n\n"
-                f"📊 **التقرير الإحصائي المفصل والمحفوظ للأبد:**\n"
-                f"👥 إجمالي الطلاب المسجلين: `{total_users}` مستخدم.\n"
-                f"🟢 الطلاب النشطين (الفعالين): `{len(active_users)}` ({active_pct:.1f}%)\n"
-                f"🔴 قاموا بحظر البوت (Block): `{len(blocked_users)}` ({blocked_pct:.1f}%)\n"
-                f"📝 إجمالي الكلمات المتاحة: `{len(words)}` كلمة.\n\n"
-                f"📦 **أدوات النسخ الاحتياطي (Backup):**\n"
-                f"يمكنك تحميل ملف الكلمات أو استخراج ملف المشتركين حياً من الداتا بيس السحابية."
-            )
-            
+            text = f"⚙️ **لوحة تحكم الإدارة المتقدمة**\n\n👥 إجمالي الطلاب: `{total_users}`.\n🟢 النشطين: `{len(active_users)}` ({active_pct:.1f}%)"
             admin_keyboard = [
                 [InlineKeyboardButton("📥 تحميل ملف الكلمات", callback_data="backup_words")],
-                [InlineKeyboardButton("📥 تحميل ملف المشتركين (txt)", callback_data="backup_users_list")]
+                [InlineKeyboardButton("📥 تحميل ملف المشتركين", callback_data="backup_users_list")]
             ]
-            
             await query.message.reply_text(text, reply_markup=InlineKeyboardMarkup(admin_keyboard), parse_mode="Markdown")
-        else:
-            await query.message.reply_text("❌ عذراً، هذه اللوحة خاصة بالمسؤول فقط.")
 
     elif query.data == "backup_words":
-        if user_id in ADMIN_IDS:
-            if os.path.exists("words.txt"):
-                await context.bot.send_document(chat_id=user_id, document=open("words.txt", "rb"), filename="words.txt", caption="📦 نسخة احتياطية لملف الكلمات الحالية.")
-            else:
-                await query.message.reply_text("❌ ملف words.txt غير موجود حالياً في السيرفر.")
+        if user_id in ADMIN_IDS and os.path.exists("words.txt"):
+            with open("words.txt", "rb") as doc:
+                await context.bot.send_document(chat_id=user_id, document=doc, filename="words.txt", caption="📦 نسخة احتياطية لملف الكلمات.")
 
     elif query.data == "backup_users_list":
         if user_id in ADMIN_IDS:
-            active_users = get_users_by_status("active")
-            blocked_users = get_users_by_status("blocked")
-            all_users = active_users + blocked_users
-            
-            if not all_users:
-                await query.message.reply_text("❌ قاعدة البيانات فارغة تماماً ولا يوجد مشتركين.")
-                return
-                
+            all_users = get_users_by_status("active") + get_users_by_status("blocked")
+            if not all_users: return
             temp_filename = "users.txt"
             with open(temp_filename, "w", encoding="utf-8") as f:
-                for u in all_users:
-                    f.write(f"{u}\n")
-            
-            await context.bot.send_document(
-                chat_id=user_id, 
-                document=open(temp_filename, "rb"), 
-                filename="users.txt", 
-                caption=f"📋 ملف المشتركين الحالي مستخرج حياً من السحاب:\n👥 الإجمالي: {len(all_users)} مستخدم."
-            )
-            try:
-                os.remove(temp_filename)
-            except Exception:
-                pass
+                for u in all_users: f.write(f"{u}\n")
+            with open(temp_filename, "rb") as doc:
+                await context.bot.send_document(chat_id=user_id, document=doc, filename="users.txt")
+            try: os.remove(temp_filename)
+            except Exception: pass
 
     elif query.data.startswith("send_broadcast_"):
-        if user_id not in ADMIN_IDS:
-            await query.message.reply_text("❌ عذراً، هذا الإجراء خاص بالإدارة فقط.")
-            return
-
+        if user_id not in ADMIN_IDS: return
         msg_id = int(query.data.split("_")[2])
-        active_users = get_users_by_status("active")
-        blocked_users = get_users_by_status("blocked")
-        all_targets = active_users + blocked_users
-
-        if not all_targets:
-            await query.message.reply_text("❌ لا يوجد أي مشتركين حالياً في قاعدة البيانات.")
-            return
-
-        await query.message.reply_text(f"🔄 جاري بدء البث الجماعي الآمن إلى {len(all_targets)} مستخدم...")
-
-        success_count = 0
-        fail_count = 0
-
+        all_targets = get_users_by_status("active") + get_users_by_status("blocked")
+        await query.message.reply_text(f"🔄 جاري بدء البث الجماعي...")
+        success_count, fail_count = 0, 0
         for u_id in all_targets:
-            if int(u_id) == user_id:
-                continue
-                
+            if int(u_id) == user_id: continue
             try:
                 await context.bot.copy_message(chat_id=int(u_id), from_chat_id=user_id, message_id=msg_id)
                 success_count += 1
@@ -286,23 +329,9 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 fail_count += 1
                 save_user(u_id, "blocked")
-                continue
-
-        if user_id != PRIMARY_ADMIN:
-            try:
-                await context.bot.copy_message(chat_id=PRIMARY_ADMIN, from_chat_id=user_id, message_id=msg_id)
-            except Exception:
-                pass
-
-        await query.message.reply_text(
-            f"✅ **اكتمل الإرسال الجماعي بنجاح مـطـلـق!**\n\n"
-            f"👍 تم التسليم بنجاح: `{success_count}` مستخدم نشط.\n"
-            f"👎 فشل وتسجيل حظر: `{fail_count}` مستخدم تم تحديثهم في قاعدة البيانات.\n"
-            f"📈 الإحصائيات مؤمنة ومحفوظة بالكامل."
-        )
+        await query.message.reply_text(f"✅ اكتمل الإرسال الجماعي!\nنجاح: `{success_count}`\nفشل: `{fail_count}`")
 
 
-# ✉️ نظام معالجة الرسائل والرد الدعم الفني والتواصل بين الأدمن والمستخدمين دون كشف الهوية الشخصية
 async def handle_user_and_admin_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:
         return
@@ -310,114 +339,92 @@ async def handle_user_and_admin_messages(update: Update, context: ContextTypes.D
     user_id = update.message.from_user.id
     user_name = update.message.from_user.full_name
     username = f"@{update.message.from_user.username}" if update.message.from_user.username else "بدون يوزر"
+    user_data = context.user_data
 
-    # 1️⃣ الحالة الأولى: مرسل الرسالة هو الأدمن
     if user_id in ADMIN_IDS:
-        # أ) إذا قام الأدمن بعمل "Reply" (رد) على رسالة مستخدم تم تحويلها سابقاً لكي يجيبه وحده
         if update.message.reply_to_message:
             reply_text = update.message.reply_to_message.text or update.message.reply_to_message.caption
-            
             if reply_text and "🆔 ID:" in reply_text:
                 try:
-                    # استخراج معرف المستخدم المستهدف من النص تلقائياً
                     target_user_id = int(reply_text.split("🆔 ID:")[1].strip().split("\n")[0])
-                    
-                    # إرسال رد الأدمن مباشرة إلى هذا المستخدم وحده (باسم البوت فقط مخفياً تماماً)
                     if update.message.text:
                         await context.bot.send_message(chat_id=target_user_id, text=f"💬 **رد من الإدارة:**\n\n{update.message.text}")
                     else:
                         await context.bot.copy_message(chat_id=target_user_id, from_chat_id=user_id, message_id=update.message.message_id)
-                    
-                    await update.message.reply_text("✅ تم إرسال ردك إلى المستخدم بنجاح دون إظهار حسابك.")
+                    await update.message.reply_text("✅ تم إرسال ردك إلى المستخدم بنجاح.")
                     return
                 except Exception as e:
-                    await update.message.reply_text(f"❌ فشل إرسال الرد للمستخدم، قد يكون حظر البوت أو المعرف خاطئ.\nالخطأ: {e}")
+                    await update.message.reply_text(f"❌ فشل إرسال الرد للمستخدم. الخطأ: {e}")
                     return
 
-        # ب) إذا كتب الأدمن رسالة عادية (بدون رد)، تفتح له خيار البث الجماعي للكل
         msg_id = update.message.message_id
         keyboard = [
             [InlineKeyboardButton("📢 إرسال جماعي للكل", callback_data=f"send_broadcast_{msg_id}")],
             [InlineKeyboardButton("❌ إلغاء", callback_data="admin_panel")]
         ]
-        await update.message.reply_text(
-            "📥 تم استلام المحتوى.\nهل تريد بثه لجميع الطلاب كإعلان جماعي؟",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await update.message.reply_text("📥 تم استلام المحتوى. هل تريد بثه؟", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # 2️⃣ الحالة الثانية: مرسل الرسالة مستخدم عادي (يتم تحويل رسالته للأدمن فوراً ليردوا عليه)
     else:
         save_user(user_id, "active")
         
-        info_header = f"📩 **رسالة جديدة من مستخدم**\n👤 الاسم: {user_name}\n🔗 اليوزر: {username}\n🆔 ID: {user_id}\n\n📝 **نص الرسالة:**\n"
+        # تحقق من إرسال بصمة صوتية لاختبار تحديد مستوى المحادثة
+        chosen_topic = user_data.get("chosen_topic", None)
         
-        # إرسال الرسالة إلى جميع الإداريين بشكل منظم يسهل الرد عليه
+        if chosen_topic and (update.message.voice or update.message.audio):
+            info_header = f"🎙️ **إجابة اختبار تحديد مستوى المحادثة**\n🎯 الموضوع المختار: *{chosen_topic}*\n👤 الاسم: {user_name}\n🔗 اليوزر: {username}\n🆔 ID: {user_id}\n\n"
+            user_data.pop("chosen_topic", None)
+        else:
+            info_header = f"📩 **رسالة جديدة من مستخدم**\n👤 الاسم: {user_name}\n🔗 اليوزر: {username}\n🆔 ID: {user_id}\n\n📝 **محتوى الرسالة:**\n"
+        
         for admin in ADMIN_IDS:
             try:
                 if update.message.text:
                     await context.bot.send_message(chat_id=admin, text=f"{info_header}{update.message.text}")
                 else:
-                    # إذا أرسل صورة أو ملف، يتم تحويلها مع النص التوجيهي
                     caption = f"{info_header}{update.message.caption if update.message.caption else ''}"
                     await context.bot.copy_message(chat_id=admin, from_chat_id=user_id, message_id=update.message.message_id, caption=caption)
             except Exception:
                 continue
+                
+        await update.message.reply_text("📥 تم استلام مشاركتك وتوجيهها للأستاذة صابرين بنجاح. سيتم الرد عليك وتقييم مستواك هنا فور الاطلاع.")
 
-        # طمأنة المستخدم بأنه تم تسليم رسالته للإدارة
-        await update.message.reply_text("📥 تم استلام رسالتك وتوجيهها للأستاذة صابرين بنجاح. سيتم الرد عليك هنا فوراً عند الاطلاع.")
 
-
-async def daily_auto_send(app: Application):
-    print("⏰ تم تشغيل نظام الإرسال التلقائي اليومي في الخلفية...")
+async def daily_auto_send(context: ContextTypes.DEFAULT_TYPE):
     while True:
         try:
             now = datetime.datetime.now()
             if now.hour == 9 and now.minute == 0:
                 words = load_words()
                 users = get_users_by_status("active")
-                
                 if words and users:
                     day = now.timetuple().tm_yday
                     word = words[(day - 1) % len(words)]
-                    
-                    text = (
-                        f"📢 **كلمة اليوم التلقائية** 📢\n\n"
-                        f"🇬🇧 الكلمة: {word[0]}\n"
-                        f"🇸🇦 المعنى: {word[1]}\n\n"
-                        f"📝 المثال:\n{word[2]}"
-                    )
-                    
+                    text = f"📢 **كلمة اليوم التلقائية** 📢\n\n🇬🇧 الكلمة: {word[0]}\n🇸🇦 المعنى: {word[1]}\n\n📝 المثال:\n{word[2]}"
                     for u_id in users:
                         try:
-                            await app.bot.send_message(chat_id=int(u_id), text=text, parse_mode="Markdown")
+                            await context.bot.send_message(chat_id=int(u_id), text=text, parse_mode="Markdown")
                             await asyncio.sleep(0.05)
                         except Exception:
                             save_user(u_id, "blocked")
-                            continue
                     await asyncio.sleep(3600)
-        except Exception as e:
-            print(f"خطأ في نظام الإرسال التلقائي: {e}")
+        except Exception: pass
         await asyncio.sleep(60)
 
 
-async def main():
-    init_db()
+async def post_init(application: Application):
+    asyncio.create_task(daily_auto_send(application))
 
-    app = Application.builder().token(TOKEN).build()
+
+def main():
+    init_db()
+    app = Application.builder().token(TOKEN).post_init(post_init).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_user_and_admin_messages))
-
-    print("🤖 Bot is running with Support Chat & Permanent Database...")
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-    asyncio.create_task(daily_auto_send(app))
-
-    while True:
-        await asyncio.sleep(3600)
+    print("🤖 Bot is running smoothly...")
+    app.run_polling()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-        
+    main()
+    
